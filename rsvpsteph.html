@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSVP · Noly & Steph</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&family=Tenor+Sans&family=Cinzel:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blush: #f8b9b9;
+      --rose: #c97070;
+      --rose-deep: #a85050;
+      --pink-pale: #fff5f5;
+      --beige-dark: #f0d5d5;
+      --cream: #fffafa;
+      --tan: #d08a8a;
+      --text: #4a2828;
+      --text-muted: #9a6060;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Montserrat',sans-serif; background:var(--pink-pale); color:var(--text); min-height:100vh; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; background: radial-gradient(ellipse at 10% 20%, rgba(248,185,185,0.18) 0%, transparent 55%), radial-gradient(ellipse at 90% 75%, rgba(248,185,185,0.12) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(255,245,245,0.5) 0%, transparent 70%); pointer-events:none; z-index:0; }
+    #petal-canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+    .page-wrap { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; }
+
+    /* Header */
+    .rsvp-header { text-align:center; margin-bottom:44px; }
+    .rsvp-eyebrow { font-size:9px; letter-spacing:5px; text-transform:uppercase; color:var(--tan); margin-bottom:12px; }
+    .rsvp-couple {
+      font-family:'Cinzel', serif;
+      font-weight: 300;
+      font-size: clamp(36px, 8vw, 76px);
+      color: var(--rose-deep);
+      line-height: 1.15;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 24px rgba(200,112,112,0.12);
+    }
+    .rsvp-amp { display:block; font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:clamp(28px,5vw,52px); color:var(--blush); opacity:0.85; letter-spacing:0.08em; margin:4px 0; }
+    .rsvp-date { margin-top:16px; font-size:10px; letter-spacing:5px; text-transform:uppercase; color:var(--text-muted); }
+    .header-divider { width:80px; height:1px; background:linear-gradient(to right,transparent,var(--blush),transparent); margin:16px auto 0; }
+    .header-venue { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--tan); margin-top:10px; }
+
+    /* Card */
+    .rsvp-card { width:100%; max-width:560px; background:rgba(255,250,247,0.93); border:1px solid rgba(160,96,96,0.14); border-radius:22px; padding:50px 42px; box-shadow:0 14px 56px rgba(160,96,96,0.13),inset 0 1px 0 rgba(255,255,255,0.9); backdrop-filter:blur(8px); position:relative; }
+    .rsvp-card::before { content:''; position:absolute; inset:10px; border:1px dashed rgba(160,96,96,0.18); border-radius:14px; pointer-events:none; }
+    @media(max-width:480px){ .rsvp-card{ padding:36px 22px; } }
+
+    /* Steps */
+    .step { display:none; }
+    .step.active { display:block; animation:fadeUp 0.5s ease both; }
+    .step-indicator { display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:34px; }
+    .step-dot { width:8px; height:8px; border-radius:50%; background:rgba(160,96,96,0.18); transition:all 0.35s ease; }
+    .step-dot.active { background:var(--rose); width:26px; border-radius:4px; }
+    .step-dot.done { background:var(--blush); }
+    .ornament { text-align:center; letter-spacing:12px; font-size:11px; color:var(--blush); opacity:0.7; margin-bottom:22px; }
+    .step-title { font-family:'Cormorant Garamond',serif; font-size:28px; font-style:italic; color:var(--text); text-align:center; margin-bottom:7px; }
+    .step-sub { text-align:center; font-size:11px; letter-spacing:1.5px; color:var(--text-muted); margin-bottom:30px; line-height:1.7; }
+    .step-divider { width:50px; height:1px; background:linear-gradient(to right,transparent,var(--blush),transparent); margin:0 auto 26px; }
+
+    /* Search */
+    .search-wrap { position:relative; margin-bottom:18px; }
+    .search-input { width:100%; padding:16px 52px 16px 22px; border:1.5px solid rgba(160,96,96,0.25); border-radius:50px; background:rgba(255,250,247,0.85); font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--text); outline:none; transition:border-color 0.25s,box-shadow 0.25s; }
+    .search-input::placeholder { color:var(--tan); font-style:italic; }
+    .search-input:focus { border-color:var(--blush); box-shadow:0 0 0 3px rgba(212,160,160,0.16); }
+    .search-icon { position:absolute; right:18px; top:50%; transform:translateY(-50%); color:var(--blush); font-size:18px; pointer-events:none; }
+    .results-list { list-style:none; margin-top:4px; }
+    .result-item { padding:13px 18px; border-radius:10px; cursor:pointer; transition:background 0.2s,transform 0.15s; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(160,96,96,0.07); }
+    .result-item:last-child { border-bottom:none; }
+    .result-item:hover,.result-item:focus { background:rgba(212,160,160,0.1); transform:translateX(3px); outline:none; }
+    .result-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--blush),var(--rose)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:600; color:white; flex-shrink:0; }
+    .result-name-text { font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--text); flex:1; }
+    .result-name-text mark { background:rgba(212,160,160,0.3); color:var(--rose); border-radius:3px; padding:0 2px; }
+    .result-group-badge { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blush); white-space:nowrap; border:1px solid rgba(212,160,160,0.4); border-radius:20px; padding:3px 8px; }
+    .result-empty { text-align:center; padding:28px 16px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:17px; color:var(--text-muted); }
+
+    /* Selected Banner */
+    .selected-banner { display:flex; align-items:center; gap:16px; background:linear-gradient(135deg,rgba(212,160,160,0.12),rgba(160,96,96,0.06)); border:1px solid rgba(160,96,96,0.18); border-radius:14px; padding:18px 22px; margin-bottom:26px; }
+    .selected-avatar { width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,var(--blush),var(--rose)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:white; flex-shrink:0; }
+    .selected-info { flex:1; }
+    .selected-name { font-family:'Cormorant Garamond',serif; font-size:20px; font-style:italic; color:var(--text); line-height:1.3; }
+    .selected-label { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--blush); margin-top:3px; }
+
+    /* Attend Buttons */
+    .attend-options { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; }
+    .attend-btn { padding:22px 14px; border:1.5px solid rgba(160,96,96,0.22); border-radius:14px; background:rgba(255,250,247,0.7); cursor:pointer; text-align:center; transition:all 0.25s ease; font-family:'Montserrat',sans-serif; }
+    .attend-btn:hover { border-color:var(--blush); background:rgba(212,160,160,0.09); transform:translateY(-2px); }
+    .attend-btn.selected-yes { border-color:var(--rose); background:linear-gradient(135deg,rgba(212,160,160,0.18),rgba(160,96,96,0.09)); box-shadow:0 4px 16px rgba(160,96,96,0.16); }
+    .attend-btn.selected-no { border-color:var(--beige-dark); background:rgba(200,180,175,0.09); }
+    .attend-icon { font-size:30px; margin-bottom:8px; display:block; }
+    .attend-label { font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
+    .attend-label-bold { font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--text); display:block; margin-bottom:4px; font-style:italic; }
+
+    /* Counter */
+    .guest-count-label { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:19px; color:var(--text); text-align:center; margin-bottom:18px; }
+    .counter-wrap { display:flex; align-items:center; justify-content:center; gap:22px; margin-bottom:14px; }
+    .counter-btn { width:46px; height:46px; border-radius:50%; border:1.5px solid rgba(160,96,96,0.28); background:rgba(255,250,247,0.85); font-size:22px; color:var(--rose); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+    .counter-btn:hover:not(:disabled) { background:linear-gradient(135deg,var(--blush),var(--rose)); color:white; border-color:transparent; transform:scale(1.08); }
+    .counter-btn:disabled { opacity:0.3; cursor:not-allowed; }
+    .counter-num { font-family:'Cormorant Garamond',serif; font-size:54px; font-weight:300; color:var(--rose); line-height:1; min-width:64px; text-align:center; }
+    .counter-note { font-size:11px; letter-spacing:1.5px; color:var(--tan); text-align:center; margin-bottom:18px; font-style:italic; }
+
+    /* Guest Names */
+    .guest-names-section { margin-bottom:18px; }
+    .guest-names-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--blush); margin-bottom:12px; display:block; }
+    .guest-name-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .guest-name-num { font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--tan); min-width:22px; text-align:right; flex-shrink:0; }
+    .guest-name-input { flex:1; padding:11px 16px; border:1.5px solid rgba(160,96,96,0.22); border-radius:50px; background:rgba(255,250,247,0.8); font-family:'Cormorant Garamond',serif; font-size:17px; color:var(--text); outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+    .guest-name-input:focus { border-color:var(--blush); box-shadow:0 0 0 3px rgba(212,160,160,0.14); }
+    .guest-name-input::placeholder { color:var(--tan); font-style:italic; }
+    .guest-name-input:read-only { background:rgba(212,160,160,0.07); color:var(--text-muted); cursor:default; }
+    .btn-remove-guest { width:30px; height:30px; border-radius:50%; border:1.5px solid rgba(160,96,96,0.18); background:transparent; color:var(--tan); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+    .btn-remove-guest:hover { background:rgba(212,160,160,0.14); color:var(--rose); border-color:var(--blush); }
+    .btn-add-guest { display:flex; align-items:center; gap:8px; background:none; border:1.5px dashed rgba(160,96,96,0.28); border-radius:50px; padding:9px 20px; font-family:'Montserrat',sans-serif; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); cursor:pointer; transition:all 0.2s; margin-top:4px; }
+    .btn-add-guest:hover { border-color:var(--blush); color:var(--rose); }
+
+    /* Fields */
+    .field-group { margin-bottom:20px; }
+    .field-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--blush); margin-bottom:10px; display:block; }
+    .field-sub { font-size:11px; color:var(--tan); font-style:italic; margin-bottom:8px; display:block; }
+    .msg-textarea { width:100%; min-height:80px; padding:14px 18px; border:1.5px solid rgba(160,96,96,0.22); border-radius:14px; background:rgba(255,250,247,0.75); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:17px; color:var(--text); resize:vertical; outline:none; transition:border-color 0.25s,box-shadow 0.25s; }
+    .msg-textarea::placeholder { color:var(--tan); }
+    .msg-textarea:focus { border-color:var(--blush); box-shadow:0 0 0 3px rgba(212,160,160,0.15); }
+
+    /* Dietary Pills */
+    .dietary-pills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .dpill { padding:6px 14px; border-radius:50px; border:1.5px solid rgba(160,96,96,0.22); font-size:11px; letter-spacing:1px; color:var(--text-muted); background:rgba(255,250,247,0.7); cursor:pointer; transition:all 0.2s; user-select:none; }
+    .dpill:hover { border-color:var(--blush); }
+    .dpill.selected { background:linear-gradient(135deg,rgba(212,160,160,0.25),rgba(160,96,96,0.12)); border-color:var(--rose); color:var(--rose); }
+    .dpill-other-wrap { display:none; }
+    .dpill-other-wrap.show { display:block; }
+
+    /* Buttons */
+    .btn-primary { display:block; width:100%; padding:16px 32px; background:linear-gradient(135deg,var(--blush),var(--rose)); color:white; border:none; border-radius:50px; font-family:'Montserrat',sans-serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; box-shadow:0 6px 24px rgba(160,96,96,0.28); transition:transform 0.2s,box-shadow 0.2s,opacity 0.2s; }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(160,96,96,0.38); opacity:0.92; }
+    .btn-primary:disabled { opacity:0.38; cursor:not-allowed; transform:none; }
+    .btn-ghost { display:block; width:100%; padding:13px 32px; margin-top:12px; background:transparent; color:var(--text-muted); border:1.5px solid rgba(160,96,96,0.2); border-radius:50px; font-family:'Montserrat',sans-serif; font-size:10px; letter-spacing:2.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+    .btn-ghost:hover { border-color:var(--blush); color:var(--rose); }
+
+    /* Thank You */
+    .thankyou-icon { font-size:52px; text-align:center; margin-bottom:16px; display:block; }
+    .thankyou-title { font-family:'Cinzel',serif; font-weight:300; font-size:34px; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose-deep); text-align:center; margin-bottom:10px; }
+    .thankyou-sub { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:18px; color:var(--text-muted); text-align:center; line-height:1.75; margin-bottom:22px; }
+    .thankyou-detail { background:rgba(248,185,185,0.12); border:1px solid rgba(200,112,112,0.16); border-radius:12px; padding:18px 22px; font-family:'Cormorant Garamond',serif; font-size:17px; color:var(--text); line-height:1.9; text-align:center; margin-bottom:24px; }
+    .thankyou-detail strong { color:var(--rose-deep); }
+
+    /* Already Submitted */
+    .already-submitted { text-align:center; }
+    .already-icon { font-size:48px; margin-bottom:14px; display:block; }
+    .already-title { font-family:'Cinzel',serif; font-weight:300; font-size:28px; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose-deep); margin-bottom:10px; }
+    .already-sub { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:18px; color:var(--text-muted); line-height:1.75; margin-bottom:20px; }
+    .already-detail { background:rgba(248,185,185,0.12); border:1px solid rgba(200,112,112,0.16); border-radius:12px; padding:16px 20px; font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--text); line-height:1.9; margin-bottom:22px; }
+    .already-detail strong { color:var(--rose-deep); }
+
+    /* Footer */
+    .page-footer { margin-top:40px; text-align:center; }
+    .footer-names { font-family:'Cinzel',serif; font-weight:300; font-size:22px; letter-spacing:0.22em; text-transform:uppercase; color:var(--rose-deep); margin-bottom:6px; }
+    .footer-date { font-size:9px; letter-spacing:4px; text-transform:uppercase; color:var(--text-muted); }
+
+    /* Note box */
+    .note-box { background:rgba(248,185,185,0.12); border:1px solid rgba(248,185,185,0.45); border-radius:12px; padding:18px 20px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--text-muted); line-height:1.85; margin-top:20px; text-align:center; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);} }
+    .fade-in { animation:fadeUp 0.7s ease both; }
+    .fade-in-2 { animation:fadeUp 0.7s 0.15s ease both; }
+  </style>
+</head>
+<body>
+
+<canvas id="petal-canvas"></canvas>
+
+<div class="page-wrap">
+
+  <header class="rsvp-header fade-in">
+    <p class="rsvp-eyebrow">You are cordially invited to confirm</p>
+    <div class="rsvp-couple">Noly<span class="rsvp-amp">&</span>Steph</div>
+    <p class="rsvp-date">St. John Bosco · Makati &nbsp;|&nbsp; 1:30 PM</p>
+    <div class="header-venue">Reception: Makati Diamond Residences</div>
+    <div class="header-divider"></div>
+  </header>
+
+  <div class="rsvp-card fade-in-2" id="rsvp-card">
+
+    <div class="step-indicator" id="step-indicator">
+      <div class="step-dot active" id="dot-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+      <div class="step-dot" id="dot-3"></div>
+    </div>
+
+    <!-- STEP 1: Search -->
+    <div class="step active" id="step-1">
+      <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+      <h2 class="step-title">Find Your Name</h2>
+      <p class="step-sub">Type your name to search from our guest list</p>
+      <div class="step-divider"></div>
+      <div class="search-wrap">
+        <input type="text" id="search-input" class="search-input" placeholder="Search your name…" autocomplete="off" inputmode="search">
+        <span class="search-icon">🔍</span>
+      </div>
+      <ul class="results-list" id="results-list"></ul>
+      <div class="note-box">
+        With love, we have reserved seats especially for you. As our venue has limited seating capacity, we kindly ask that only those who have confirmed their RSVP attend and that the number of guests be limited to the seats indicated on your invitation.<br><br>
+        While we would love to celebrate with everyone, we respectfully request that this invitation be extended only to the guests listed. We are unable to accommodate additional plus ones or unlisted companions.<br><br>
+        Thank you for your kind understanding and for being part of our special day. ✨🤍
+      </div>
+    </div>
+
+    <!-- STEP 2: Confirm -->
+    <div class="step" id="step-2">
+      <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+      <h2 class="step-title">Confirm Attendance</h2>
+      <div class="step-divider"></div>
+
+      <div class="selected-banner" id="selected-banner">
+        <div class="selected-avatar" id="selected-avatar"></div>
+        <div class="selected-info">
+          <div class="selected-name" id="selected-name-display"></div>
+          <div class="selected-label">Guest</div>
+        </div>
+      </div>
+
+      <div class="attend-options">
+        <button class="attend-btn" id="btn-yes" onclick="chooseAttend('yes')">
+          <span class="attend-icon">💌</span>
+          <span class="attend-label-bold">Joyfully Accept</span>
+          <span class="attend-label">I will attend</span>
+        </button>
+        <button class="attend-btn" id="btn-no" onclick="chooseAttend('no')">
+          <span class="attend-icon">🕊️</span>
+          <span class="attend-label-bold">Regretfully Decline</span>
+          <span class="attend-label">I cannot attend</span>
+        </button>
+      </div>
+
+      <!-- YES section -->
+      <div id="guest-count-section" style="display:none;margin-top:22px;">
+        <div class="step-divider"></div>
+        <div id="counter-block">
+          <p class="guest-count-label">How many guests will be attending?<br><small style="font-size:13px;color:var(--tan);">(including yourself)</small></p>
+          <div class="counter-wrap">
+            <button class="counter-btn" id="btn-minus" onclick="adjustCount(-1)" disabled>−</button>
+            <span class="counter-num" id="count-display">1</span>
+            <button class="counter-btn" id="btn-plus" onclick="adjustCount(1)">+</button>
+          </div>
+          <p class="counter-note">Maximum of <strong id="max-label">——</strong> guests per invitation</p>
+        </div>
+
+        <div class="guest-names-section" id="guest-names-section">
+          <label class="guest-names-label" id="guest-names-label">Names of your party</label>
+          <div id="guest-name-rows"></div>
+          <button class="btn-add-guest" id="btn-add-guest" onclick="addGuestNameRow()" style="display:none;">
+            + Add another name
+          </button>
+        </div>
+
+        <!-- Dietary -->
+        <div class="field-group" style="margin-top:8px;">
+          <label class="field-label">🌿 Dietary Restrictions or Allergies</label>
+          <span class="field-sub">Do any of your party have dietary needs? (optional)</span>
+          <div class="dietary-pills" id="dietary-pills">
+            <span class="dpill" data-value="Vegetarian"    onclick="togglePill(this)">🥦 Vegetarian</span>
+            <span class="dpill" data-value="Vegan"         onclick="togglePill(this)">🌱 Vegan</span>
+            <span class="dpill" data-value="Halal"         onclick="togglePill(this)">☪️ Halal</span>
+            <span class="dpill" data-value="Gluten-Free"   onclick="togglePill(this)">🌾 Gluten-Free</span>
+            <span class="dpill" data-value="Nut Allergy"   onclick="togglePill(this)">🥜 Nut Allergy</span>
+            <span class="dpill" data-value="Seafood Allergy" onclick="togglePill(this)">🦐 Seafood Allergy</span>
+            <span class="dpill" data-value="Dairy-Free"    onclick="togglePill(this)">🥛 Dairy-Free</span>
+            <span class="dpill" data-value="Other"         onclick="togglePillOther(this)">✏️ Other</span>
+          </div>
+          <div class="dpill-other-wrap" id="other-dietary-wrap">
+            <input type="text" class="guest-name-input" id="other-dietary-input" placeholder="Please specify…" style="margin-bottom:0;">
+          </div>
+        </div>
+
+        <!-- Message -->
+        <div class="field-group">
+          <label class="field-label">Leave a message (optional)</label>
+          <textarea class="msg-textarea" id="msg-input" placeholder="Share a warm wish for the couple…" rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- NO section -->
+      <div id="decline-section" style="display:none;margin-top:22px;">
+        <div class="step-divider"></div>
+        <div class="field-group">
+          <label class="field-label">Leave a message (optional)</label>
+          <textarea class="msg-textarea" id="msg-input-no" placeholder="We'll miss you! Feel free to leave a message…" rows="3"></textarea>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-confirm" onclick="submitRSVP()" disabled>Confirm →</button>
+      <button class="btn-ghost" onclick="goBack()">← Change Name</button>
+    </div>
+
+    <!-- STEP 3: Thank You -->
+    <div class="step" id="step-3">
+      <span class="thankyou-icon" id="ty-icon">💕</span>
+      <div class="thankyou-title" id="ty-title">Thank You!</div>
+      <div class="step-divider"></div>
+      <p class="thankyou-sub" id="ty-sub">Your response has been received.</p>
+      <div class="thankyou-detail" id="ty-detail"></div>
+      <p style="text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--text-muted);line-height:1.7;margin-bottom:26px;">
+        We can't wait to celebrate this beautiful day with you. 🌸
+      </p>
+    </div>
+
+    <!-- STEP 4: Already Submitted -->
+    <div class="step" id="step-4">
+      <div class="already-submitted">
+        <span class="already-icon">🌸</span>
+        <div class="already-title">Already Received!</div>
+        <div class="step-divider"></div>
+        <p class="already-sub" id="already-sub">You've already submitted your RSVP. Thank you!</p>
+        <div class="already-detail" id="already-detail"></div>
+        <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--text-muted);line-height:1.7;">
+          If you need to make changes, please contact the couple directly. 💕
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+
+  <footer class="page-footer fade-in">
+    <div class="footer-names">Noly & Steph</div>
+    <p class="footer-date">Pink Beige Floral · Makati</p>
+  </footer>
+
+</div>
+
+<script>
+  // ✏️  Paste your Google Apps Script Web App URL below after deploying
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYI5IumE4NR-fEEWaEwYV0dw7cfB0dY_S5WLab_b3Aig-QQfgUtXRcqgpQuiB1j7Dvxw/exec';
+  const STORAGE_KEY     = 'ns_rsvp_2026';
+
+  // ══════════════════════════════════════════════════════
+  // GUEST LIST — group-based
+  // Each entry = one invitation unit
+  // names[]  → all names in the group (auto-filled in rows)
+  // searchNames[] → all names each person can search by
+  // maxGuests → seat limit for the invitation
+  // ══════════════════════════════════════════════════════
+  const GROUPS = [
+    // ── Groups (merged invitations) ──────────────────────
+    { names: ["Khris Penales","Angelo Penales","Andrea Sage Penales"],                       maxGuests: 3 },
+    { names: ["Tricia Sienkiewicz","Jordan Sienkiewicz","Agostos Sienkiewicz"],              maxGuests: 3 },
+    { names: ["Imelda Geroche","Norwen Geroche","Elaiza Mae Prado","Nathalie May Geroche"],  maxGuests: 4 },
+    { names: ["Danielle Langit","Algene Cabaylo","Damien Cabaylo","Allister Cabaylo"],       maxGuests: 4 },
+    { names: ["Glecyline Salanguit","Alvin Salanguit","Arziolo Salanguit","Alvia Salanguit"],maxGuests: 4 },
+    { names: ["Paola Langit","Migs Castaneda"],                                              maxGuests: 2 },
+    { names: ["Hannah Villarante","Kurt Villarante","Baby #1"],                              maxGuests: 3 },
+    { names: ["Pedro Langit","Marivic Langit"],                                              maxGuests: 2 },
+    { names: ["Maria Margaret Thatcher Ang","Alexis Ang II","Alexander Ang III","Aslan Ang"],maxGuests: 4 },
+    { names: ["Dennis Langit","Kuya EJ"],                                                    maxGuests: 2 },
+    { names: ["Joecel Langit","Noni"],                                                       maxGuests: 2 },
+    { names: ["Louie Clamor","Claire Clamor"],                                               maxGuests: 2 },
+    { names: ["Ester Clamor","Wilfredo Clamor"],                                             maxGuests: 2 },
+    { names: ["Jean Ochoa","Kyle"],                                                          maxGuests: 2 },
+    { names: ["Clariza May Semira","Lloyd Soro"],                                            maxGuests: 2 },
+    { names: ["Mary Josephine Camayra","Joemel Camayra"],                                    maxGuests: 2 },
+    { names: ["Delia Mallillin","Jayvee Mallillin"],                                         maxGuests: 2 },
+    { names: ["Catrina Mabutas","Ron Paculanan"],                                            maxGuests: 2 },
+    { names: ["Fretzie Murawski","Dalvin Murawski"],                                         maxGuests: 2 },
+    { names: ["Gemma Gautani","Gerome Gautani"],                                             maxGuests: 2 },
+    { names: ["George Cruz","Marivic Cruz","+1","+1"],                                       maxGuests: 4 },
+    { names: ["Cecilia Gatchalian","+1"],                                                    maxGuests: 2 },
+    { names: ["Naida Taliman","Froilan Taliman"],                                            maxGuests: 2 },
+    { names: ["Ma. Aurora Banog","Elijo Banog"],                                             maxGuests: 2 },
+    { names: ["Gabriel Tabay","+1","+1","+1","+1"],                                         maxGuests: 5 },
+    { names: ["Marilyn H. Geroche","Lannie D. Geroche","J-lyn Faith G. Vila"],               maxGuests: 3 },
+    { names: ["Alfredo B. Mauricio II","Alfredo D. Mauricio","Jocelyn B. Mauricio"],         maxGuests: 3 },
+    { names: ["Karleslee B. Lopez","Norgie B. Lopez","Kurtlee B. Lopez","Kylo Lopez"],       maxGuests: 4 },
+    { names: ["May Jane Geroche","Emelia Geroche"],                                          maxGuests: 2 },
+    { names: ["Janessa Susan Cruz","+1"],                                                    maxGuests: 2 },
+    { names: ["Lilia H. Serna","+1"],                                                        maxGuests: 2 },
+    { names: ["Ma. Frances A. Geronimo","+1"],                                               maxGuests: 2 },
+    { names: ["Daisy I. Pedrez","+1"],                                                       maxGuests: 2 },
+    { names: ["Rudy S. Galutera","+1"],                                                      maxGuests: 2 },
+    { names: ["Erika Alex","+1"],                                                            maxGuests: 2 },
+
+    // ── 1-pax solo guests ─────────────────────────────────
+    { names: ["Czarinah Marie Langit"],  maxGuests: 1 },
+    { names: ["Isabel Anne Langit"],     maxGuests: 1 },
+    { names: ["Menzi Langit"],           maxGuests: 1 },
+    { names: ["Reynaldo Langit"],        maxGuests: 1 },
+    { names: ["Wreigh Miguel Langit"],   maxGuests: 1 },
+    { names: ["Neil Langit"],            maxGuests: 1 },
+    { names: ["Gabriel Langit"],         maxGuests: 1 },
+    { names: ["Frederique Langit"],      maxGuests: 1 },
+    { names: ["Peter Paul Langit"],      maxGuests: 1 },
+    { names: ["Peter John"],             maxGuests: 1 },
+    { names: ["Queil"],                  maxGuests: 1 },
+    { names: ["Adelyn Garcia"],          maxGuests: 1 },
+    { names: ["Anthony Dela Cruz"],      maxGuests: 1 },
+    { names: ["Winnie Onza"],            maxGuests: 1 },
+    { names: ["Danica Ocde"],            maxGuests: 1 },
+    { names: ["Arlette Dela Cruz"],      maxGuests: 1 },
+    { names: ["Darlene Dela Cruz"],      maxGuests: 1 },
+    { names: ["Era Mae Dadula"],         maxGuests: 1 },
+    { names: ["Justine Garcia"],         maxGuests: 1 },
+    { names: ["Michaela Patrice Lipata"],maxGuests: 1 },
+    { names: ["Timber Tabulao"],         maxGuests: 1 },
+    { names: ["Jhosua Aquino"],          maxGuests: 1 },
+    { names: ["Denise Bas"],             maxGuests: 1 },
+    { names: ["Nomelyn Geroche"],        maxGuests: 1 },
+    { names: ["Antro Gee Geroche"],      maxGuests: 1 },
+    { names: ["Rosie G. Aporong"],       maxGuests: 1 },
+    { names: ["Analyn Baldonado"],       maxGuests: 1 },
+    { names: ["Miguel Simpao"],          maxGuests: 1 },
+
+    // ── Malditas ──────────────────────────────────────────
+    { names: ["Maldita 1"], maxGuests: 1 },
+    { names: ["Maldita 2"], maxGuests: 1 },
+    { names: ["Maldita 3"], maxGuests: 1 },
+    { names: ["Maldita 4"], maxGuests: 1 },
+    { names: ["Maldita 5"], maxGuests: 1 },
+    { names: ["Maldita 6"], maxGuests: 1 },
+    { names: ["Maldita 7"], maxGuests: 1 },
+    { names: ["Maldita 8"], maxGuests: 1 },
+  ];
+
+  // Build a flat searchable index: each item points back to its group
+  // Only real names (not "+1" / "Baby #1") are searchable
+  const SEARCH_INDEX = [];
+  GROUPS.forEach((group, gi) => {
+    group.names.forEach((name, ni) => {
+      const skip = name.startsWith('+') || name === 'Baby #1';
+      if (!skip) {
+        SEARCH_INDEX.push({ displayName: name, groupIndex: gi, memberIndex: ni });
+      }
+    });
+  });
+
+  // ── State ──
+  let selectedGroup  = null;   // the full group object
+  let attendChoice   = null;
+  let guestCount     = 1;
+  let selectedDietary = new Set();
+
+  window.addEventListener('load', () => { searchInput.focus(); });
+
+  // ── localStorage helpers ──
+  function getSubmitted() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); } catch { return {}; } }
+  function markSubmitted(key, data) { const a=getSubmitted(); a[key]=data; localStorage.setItem(STORAGE_KEY,JSON.stringify(a)); }
+  function groupKey(group) { return group.names[0]; } // use lead name as key
+  function isAlreadySubmittedLocal(group) { return !!getSubmitted()[groupKey(group)]; }
+
+  async function checkAlreadySubmitted(group) {
+    if (isAlreadySubmittedLocal(group)) {
+      showAlreadySubmitted(group, getSubmitted()[groupKey(group)]); return true;
+    }
+    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
+      try {
+        const name = groupKey(group);
+        const params = new URLSearchParams({ action:'check', name });
+        const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),5000);
+        const res = await fetch(`${APPS_SCRIPT_URL}?${params}`, { signal:ctrl.signal });
+        clearTimeout(t);
+        if (res.ok) {
+          const j = await res.json();
+          if (j && j.submitted) {
+            markSubmitted(groupKey(group), { attending:j.attending, guestCount:j.guestCount, guestNames:j.guestNames, dietary:j.dietary, submittedAt:j.submittedAt||'—' });
+            showAlreadySubmitted(group, getSubmitted()[groupKey(group)]); return true;
+          }
+        }
+      } catch(e) { console.warn('Server check failed:',e); }
+    }
+    return false;
+  }
+
+  function showAlreadySubmitted(group, prev) {
+    const firstName = group.names[0].split(' ')[0];
+    document.getElementById('already-sub').textContent = `You've already sent your RSVP, ${firstName}. Your response is confirmed!`;
+    document.getElementById('already-detail').innerHTML =
+      `<strong>Guest(s):</strong> ${group.names.filter(n=>!n.startsWith('+')&&n!=='Baby #1').join(', ')}<br>
+       <strong>Attending:</strong> ${prev.attending ? 'Joyfully Accepting ✓' : 'Regretfully Declining'}<br>
+       ${prev.attending && prev.guestCount > 1 ? `<strong>Party of:</strong> ${prev.guestCount} guests<br>` : ''}
+       ${prev.guestNames ? `<strong>Names:</strong> ${prev.guestNames}<br>` : ''}
+       ${prev.dietary ? `<strong>Dietary Notes:</strong> ${prev.dietary}<br>` : ''}
+       <strong>Submitted:</strong> ${prev.submittedAt||'—'}`;
+    goStep(4);
+  }
+
+  // ── Search helpers ──
+  function normalize(s) { return s.toLowerCase().replace(/[.,'\-]/g,'').trim(); }
+  function fuzzyMatch(q, name) {
+    const nq=normalize(q), nn=normalize(name);
+    if (nn.includes(nq)) return true;
+    return nq.split(/\s+/).every(w=>nn.includes(w));
+  }
+  function highlight(name, q) {
+    const esc=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return name.replace(new RegExp(`(${esc})`,'gi'),'<mark>$1</mark>');
+  }
+
+  const searchInput = document.getElementById('search-input');
+  const resultsList = document.getElementById('results-list');
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim();
+    resultsList.innerHTML = '';
+    if (q.length < 2) return;
+
+    // Search all individual names; deduplicate by groupIndex
+    const seenGroups = new Set();
+    const matches = [];
+    SEARCH_INDEX.forEach(entry => {
+      if (fuzzyMatch(q, entry.displayName) && !seenGroups.has(entry.groupIndex)) {
+        seenGroups.add(entry.groupIndex);
+        matches.push(entry);
+      }
+    });
+
+    if (!matches.length) {
+      resultsList.innerHTML = `<li class="result-empty">No guest found for "<em>${q}</em>".<br>Please check spelling or contact the couple.</li>`;
+      return;
+    }
+
+    matches.slice(0,8).forEach(entry => {
+      const group = GROUPS[entry.groupIndex];
+      const li = document.createElement('li');
+      li.className = 'result-item'; li.tabIndex = 0;
+      const realNames = group.names.filter(n=>!n.startsWith('+')&&n!=='Baby #1');
+      const initials  = realNames[0].split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      const done      = isAlreadySubmittedLocal(group);
+      const isGroup   = realNames.length > 1;
+      // Show the matched name first, then rest of group as sub-line
+      const primaryDisplay = highlight(entry.displayName, q);
+      const groupPreview   = isGroup ? realNames.filter(n=>n!==entry.displayName).join(', ') : '';
+
+      li.innerHTML = `
+        <div class="result-avatar">${initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="result-name-text">${primaryDisplay}</div>
+          ${isGroup && groupPreview ? `<div style="font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--tan);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${groupPreview}</div>` : ''}
+        </div>
+        ${isGroup ? `<span class="result-group-badge">Group · ${group.maxGuests}pax</span>` : ''}
+        ${done ? '<span style="font-size:10px;letter-spacing:1px;color:var(--blush);white-space:nowrap;">✓ Done</span>' : ''}
+      `;
+      li.addEventListener('click', () => selectGroup(group));
+      li.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') selectGroup(group); });
+      resultsList.appendChild(li);
+    });
+  });
+
+  async function selectGroup(group) {
+    selectedGroup = group;
+    const blocked = await checkAlreadySubmitted(group);
+    if (blocked) return;
+
+    attendChoice = null;
+    guestCount   = group.names.length; // start = full group size
+    selectedDietary.clear();
+
+    // Show group names in the banner
+    const realNames = group.names.filter(n=>!n.startsWith('+')&&n!=='Baby #1');
+    const initials  = realNames[0].split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const bannerLabel = realNames.length > 1 ? realNames.join(' · ') : realNames[0];
+
+    document.getElementById('selected-avatar').textContent       = initials;
+    document.getElementById('selected-name-display').textContent = bannerLabel;
+    document.getElementById('max-label').textContent             = group.maxGuests;
+    document.getElementById('count-display').textContent         = guestCount;
+    document.getElementById('btn-minus').disabled                = guestCount <= 1;
+    document.getElementById('btn-plus').disabled                 = guestCount >= group.maxGuests;
+    document.getElementById('counter-block').style.display       = group.maxGuests <= 1 ? 'none' : 'block';
+    document.getElementById('guest-count-section').style.display = 'none';
+    document.getElementById('decline-section').style.display     = 'none';
+    document.getElementById('btn-confirm').disabled              = true;
+    document.getElementById('btn-yes').classList.remove('selected-yes');
+    document.getElementById('btn-no').classList.remove('selected-no');
+    document.getElementById('msg-input').value    = '';
+    document.getElementById('msg-input-no').value = '';
+    document.querySelectorAll('.dpill').forEach(p=>p.classList.remove('selected'));
+    document.getElementById('other-dietary-wrap').classList.remove('show');
+    document.getElementById('other-dietary-input').value = '';
+
+    goStep(2);
+  }
+
+  function chooseAttend(choice) {
+    attendChoice = choice;
+    document.getElementById('btn-yes').classList.toggle('selected-yes', choice==='yes');
+    document.getElementById('btn-no').classList.toggle('selected-no', choice==='no');
+    if (choice === 'yes') {
+      document.getElementById('guest-count-section').style.display = 'block';
+      document.getElementById('decline-section').style.display     = 'none';
+      const isSolo = selectedGroup.maxGuests <= 1;
+      document.getElementById('guest-names-label').style.display   = isSolo ? 'none' : 'block';
+      buildGuestNameRows(guestCount);
+    } else {
+      document.getElementById('guest-count-section').style.display = 'none';
+      document.getElementById('decline-section').style.display     = 'block';
+    }
+    document.getElementById('btn-confirm').disabled = false;
+  }
+
+  function adjustCount(delta) {
+    const max = selectedGroup.maxGuests;
+    guestCount = Math.max(1, Math.min(max, guestCount + delta));
+    document.getElementById('count-display').textContent = guestCount;
+    document.getElementById('btn-minus').disabled = guestCount <= 1;
+    document.getElementById('btn-plus').disabled  = guestCount >= max;
+    buildGuestNameRows(guestCount);
+  }
+
+  function buildGuestNameRows(count) {
+    const container = document.getElementById('guest-name-rows');
+    const addBtn    = document.getElementById('btn-add-guest');
+    const max       = selectedGroup.maxGuests;
+
+    // Preserve any manually edited values
+    const existing = Array.from(container.querySelectorAll('.guest-name-input')).map(i => i.value);
+    container.innerHTML = '';
+
+    for (let i = 0; i < count; i++) {
+      const row = document.createElement('div');
+      row.className = 'guest-name-row';
+
+      // Pre-fill from group names; fall back to what user typed; then empty
+      const prefill = existing[i] !== undefined
+        ? existing[i]
+        : (selectedGroup.names[i] && !selectedGroup.names[i].startsWith('+') && selectedGroup.names[i] !== 'Baby #1'
+            ? selectedGroup.names[i]
+            : '');
+
+      const isFirst = i === 0;
+      row.innerHTML = `
+        <span class="guest-name-num">${i+1}.</span>
+        <input class="guest-name-input" type="text"
+          placeholder="${isFirst ? 'Your name' : 'Guest name'}">
+        ${!isFirst ? `<button class="btn-remove-guest" onclick="removeGuestRow(this)" title="Remove">×</button>` : ''}
+      `;
+      const input = row.querySelector('input');
+      input.value = prefill;
+      // Allow editing all names (none are read-only for group invites)
+      container.appendChild(row);
+    }
+
+    addBtn.style.display = count < max ? 'flex' : 'none';
+  }
+
+  function addGuestNameRow() {
+    if (guestCount >= selectedGroup.maxGuests) return;
+    guestCount++;
+    document.getElementById('count-display').textContent = guestCount;
+    document.getElementById('btn-minus').disabled = false;
+    document.getElementById('btn-plus').disabled  = guestCount >= selectedGroup.maxGuests;
+    buildGuestNameRows(guestCount);
+  }
+
+  function removeGuestRow(btn) {
+    if (guestCount <= 1) return;
+    guestCount--;
+    document.getElementById('count-display').textContent = guestCount;
+    document.getElementById('btn-minus').disabled = guestCount <= 1;
+    document.getElementById('btn-plus').disabled  = guestCount >= selectedGroup.maxGuests;
+    buildGuestNameRows(guestCount);
+  }
+
+  function getGuestNames() {
+    return Array.from(document.querySelectorAll('.guest-name-input')).map(i=>i.value.trim()).filter(Boolean).join(', ');
+  }
+
+  function togglePill(el) {
+    el.classList.toggle('selected');
+    if (el.classList.contains('selected')) selectedDietary.add(el.dataset.value);
+    else selectedDietary.delete(el.dataset.value);
+  }
+  function togglePillOther(el) {
+    el.classList.toggle('selected');
+    document.getElementById('other-dietary-wrap').classList.toggle('show', el.classList.contains('selected'));
+  }
+  function getDietaryNotes() {
+    const pills = Array.from(selectedDietary).filter(v=>v!=='Other');
+    const other = document.getElementById('other-dietary-input').value.trim();
+    if (other) pills.push(other);
+    return pills.join(', ');
+  }
+
+  async function submitRSVP() {
+    if (!attendChoice) return;
+    const msg        = attendChoice==='yes' ? document.getElementById('msg-input').value.trim() : document.getElementById('msg-input-no').value.trim();
+    const guestNames = attendChoice==='yes' ? getGuestNames() : '';
+    const dietary    = attendChoice==='yes' ? getDietaryNotes() : '';
+    const phTime     = new Date().toLocaleString('en-PH',{timeZone:'Asia/Manila'});
+    const leadName   = groupKey(selectedGroup);
+
+    const payload = { name:leadName, attending:attendChoice==='yes', guestCount:attendChoice==='yes'?guestCount:0, guestNames, dietary, message:msg, timestamp:new Date().toISOString() };
+
+    const btn = document.getElementById('btn-confirm');
+    btn.disabled=true; btn.textContent='Sending… 💌';
+
+    try {
+      if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
+        const params = new URLSearchParams({ name:payload.name, attending:payload.attending?'true':'false', guestCount:payload.guestCount, guestNames, dietary, message:msg, timestamp:payload.timestamp });
+        await fetch(`${APPS_SCRIPT_URL}?${params}`, { method:'GET', mode:'no-cors', redirect:'follow' });
+      }
+    } catch(err) { console.warn('Apps Script error:',err); }
+    finally { btn.disabled=false; btn.textContent='Confirm →'; }
+
+    markSubmitted(leadName, { attending:payload.attending, guestCount:payload.guestCount, guestNames, dietary, submittedAt:phTime });
+
+    const firstName = leadName.split(' ')[0];
+    if (attendChoice==='yes') {
+      document.getElementById('ty-icon').textContent  = '💕';
+      document.getElementById('ty-title').textContent = 'Thank You!';
+      document.getElementById('ty-sub').textContent   = `We're so thrilled you're coming, ${firstName}!`;
+      document.getElementById('ty-detail').innerHTML  = `
+        <strong>Guest(s):</strong> ${leadName}<br>
+        <strong>Attending:</strong> Joyfully Accepting ✓<br>
+        ${selectedGroup.maxGuests>1?`<strong>Party of:</strong> ${guestCount} ${guestCount===1?'person':'guests'}<br>`:''}
+        ${guestNames?`<strong>Names:</strong> ${guestNames}<br>`:''}
+        ${dietary?`<strong>Dietary Notes:</strong> ${dietary}<br>`:''}
+        ${msg?`<strong>Message:</strong> "${msg}"`:''}
+      `;
+    } else {
+      document.getElementById('ty-icon').textContent  = '🕊️';
+      document.getElementById('ty-title').textContent = "We'll Miss You";
+      document.getElementById('ty-sub').textContent   = `Thank you for letting us know, ${firstName}. You'll be in our hearts.`;
+      document.getElementById('ty-detail').innerHTML  = `
+        <strong>Guest(s):</strong> ${leadName}<br>
+        <strong>Response:</strong> Regretfully Declining<br>
+        ${msg?`<strong>Message:</strong> "${msg}"`:''}
+      `;
+    }
+    goStep(3);
+  }
+
+  function goBack() {
+    selectedGroup=null; attendChoice=null; guestCount=1; selectedDietary.clear();
+    goStep(1); searchInput.value=''; resultsList.innerHTML=''; searchInput.focus();
+  }
+
+  function goStep(n) {
+    document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+    document.getElementById(`step-${n}`).classList.add('active');
+    [1,2,3,4].forEach(i=>{
+      const d=document.getElementById(`dot-${i}`); if(!d)return;
+      d.classList.remove('active','done');
+      if(i<n&&n<=3) d.classList.add('done');
+      if(i===n&&n<=3) d.classList.add('active');
+    });
+    document.getElementById('step-indicator').style.display = n===4?'none':'flex';
+  }
+
+  // ── Falling petals canvas ──
+  const canvas = document.getElementById('petal-canvas');
+  const ctx    = canvas.getContext('2d');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  const PCOLORS=['#f8b9b9','#f9c8c8','#fad4d4','#f0a8a8','#fbe0e0','#f4b0b0','#fac4c4','#fce8e8'];
+  class Petal {
+    constructor(init=false){ this.x=Math.random()*canvas.width; this.y=init?Math.random()*canvas.height:-20; this.r=5+Math.random()*8; this.color=PCOLORS[Math.floor(Math.random()*PCOLORS.length)]; this.vx=(Math.random()-0.5)*0.6; this.vy=0.4+Math.random()*0.5; this.angle=Math.random()*Math.PI*2; this.spin=(Math.random()-0.5)*0.04; this.op=0.5+Math.random()*0.4; this.sw=0.02+Math.random()*0.02; this.sa=Math.random()*Math.PI*2; }
+    draw(){ ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(this.angle); ctx.globalAlpha=this.op; ctx.beginPath(); ctx.ellipse(0,0,this.r,this.r*0.5,0,0,Math.PI*2); ctx.fillStyle=this.color; ctx.fill(); ctx.restore(); }
+    update(){ this.sa+=this.sw; this.x+=this.vx+Math.sin(this.sa)*0.6; this.y+=this.vy; this.angle+=this.spin; if(this.y>canvas.height+20){ this.y=-20; this.x=Math.random()*canvas.width; } }
+  }
+  const petals=Array.from({length:30},(_,i)=>new Petal(i<20));
+  function animate(){ ctx.clearRect(0,0,canvas.width,canvas.height); petals.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate); }
+  animate();
+</script>
+</body>
+</html>
