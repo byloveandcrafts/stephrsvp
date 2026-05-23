@@ -247,6 +247,42 @@
       <p class="step-sub" id="step1b-sub">Tap ✓ or ✗ for each person in your group</p>
       <div class="step-divider"></div>
       <div id="member-cards-wrap"></div>
+
+      <!-- Dietary + Message — shown only when someone is attending -->
+      <div id="group-extras" style="display:none;margin-top:22px;">
+        <div class="step-divider"></div>
+        <div class="field-group">
+          <label class="field-label">🌿 Dietary Restrictions or Allergies</label>
+          <span class="field-sub">Do any of your party have dietary needs? (optional)</span>
+          <div class="dietary-pills" id="group-dietary-pills">
+            <span class="dpill" data-value="Vegetarian"      onclick="toggleGPill(this)">🥦 Vegetarian</span>
+            <span class="dpill" data-value="Vegan"           onclick="toggleGPill(this)">🌱 Vegan</span>
+            <span class="dpill" data-value="Halal"           onclick="toggleGPill(this)">☪️ Halal</span>
+            <span class="dpill" data-value="Gluten-Free"     onclick="toggleGPill(this)">🌾 Gluten-Free</span>
+            <span class="dpill" data-value="Nut Allergy"     onclick="toggleGPill(this)">🥜 Nut Allergy</span>
+            <span class="dpill" data-value="Seafood Allergy" onclick="toggleGPill(this)">🦐 Seafood Allergy</span>
+            <span class="dpill" data-value="Dairy-Free"      onclick="toggleGPill(this)">🥛 Dairy-Free</span>
+            <span class="dpill" data-value="Other"           onclick="toggleGPillOther(this)">✏️ Other</span>
+          </div>
+          <div class="dpill-other-wrap" id="group-other-dietary-wrap">
+            <input type="text" class="guest-name-input" id="group-other-dietary-input" placeholder="Please specify…" style="margin-bottom:0;">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Leave a message (optional)</label>
+          <textarea class="msg-textarea" id="group-msg-input" placeholder="Share a warm wish for the couple…" rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- Decline-only message -->
+      <div id="group-decline-extras" style="display:none;margin-top:22px;">
+        <div class="step-divider"></div>
+        <div class="field-group">
+          <label class="field-label">Leave a message (optional)</label>
+          <textarea class="msg-textarea" id="group-msg-input-no" placeholder="We'll miss you! Feel free to leave a message…" rows="3"></textarea>
+        </div>
+      </div>
+
       <div class="submit-loading" id="group-submit-loading"><div class="spinner"></div>Sending your RSVP…</div>
       <button class="group-proceed-btn" id="group-proceed-btn" onclick="proceedFromGroup()" disabled>Confirm Responses →</button>
       <button class="group-back-link" onclick="backToSearch()">← Back to Search</button>
@@ -581,18 +617,17 @@
         const group = GROUPS[entry.groupIndex];
         const li = document.createElement('li');
         li.className = 'result-item'; li.tabIndex = 0;
-        const realNames = group.names.filter(n=>!isPlaceholder(n));
-        const initials  = realNames[0].split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+        const initials  = entry.displayName.split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
         const done      = isAlreadySubmittedLocal(group);
-        const isGroup   = group.names.length > 1;
+        const isGroup   = group.maxGuests > 1;
         const primaryDisplay = highlight(entry.displayName, q);
 
         li.innerHTML = `
           <div class="result-avatar">${initials}</div>
           <div style="flex:1;min-width:0;">
             <div class="result-name-text">${primaryDisplay}</div>
+            ${isGroup ? `<div style="font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--tan);font-style:italic;margin-top:2px;">+${group.maxGuests - 1} companion${group.maxGuests - 1 > 1 ? 's' : ''}</div>` : ''}
           </div>
-          ${isGroup ? `<span class="result-group-badge">Group · ${group.maxGuests}pax</span>` : ''}
           ${done ? '<span style="font-size:10px;letter-spacing:1px;color:var(--blush);white-space:nowrap;">✓ Done</span>' : ''}
         `;
         li.addEventListener('click', () => openGroup(group));
@@ -675,12 +710,39 @@
     updateGroupProceedBtn();
   }
 
+  let groupSelectedDietary = new Set();
+
+  function toggleGPill(el) {
+    el.classList.toggle('selected');
+    if (el.classList.contains('selected')) groupSelectedDietary.add(el.dataset.value);
+    else groupSelectedDietary.delete(el.dataset.value);
+  }
+  function toggleGPillOther(el) {
+    el.classList.toggle('selected');
+    document.getElementById('group-other-dietary-wrap').classList.toggle('show', el.classList.contains('selected'));
+  }
+  function getGroupDietaryNotes() {
+    const pills = Array.from(groupSelectedDietary).filter(v=>v!=='Other');
+    const other = document.getElementById('group-other-dietary-input').value.trim();
+    if (other) pills.push(other);
+    return pills.join(', ');
+  }
+
+  function updateGroupExtras() {
+    const anyYes = groupMemberStates.some(m => m.choice === 'yes');
+    const anyNo  = groupMemberStates.some(m => m.choice === 'no');
+    const allNo  = groupMemberStates.length > 0 && groupMemberStates.every(m => m.choice === 'no');
+    document.getElementById('group-extras').style.display         = anyYes ? 'block' : 'none';
+    document.getElementById('group-decline-extras').style.display = (allNo && !anyYes) ? 'block' : 'none';
+  }
+
   function setMemberChoice(idx, choice) {
     groupMemberStates[idx].choice = choice;
     const yBtn = document.getElementById(`mbtn-yes-${idx}`);
     const nBtn = document.getElementById(`mbtn-no-${idx}`);
     if (yBtn) { yBtn.classList.toggle('go', choice==='yes'); yBtn.classList.remove('nogo'); }
     if (nBtn) { nBtn.classList.toggle('nogo', choice==='no'); nBtn.classList.remove('go'); }
+    updateGroupExtras();
     updateGroupProceedBtn();
   }
 
@@ -698,6 +760,10 @@
     // Prepare submission payload
     const guestNames = groupMemberStates.map(m => m.resolvedName || m.name).join(', ');
     const attendingNames = attending.map(m => m.resolvedName || m.name).join(', ');
+    const dietary = attending.length > 0 ? getGroupDietaryNotes() : '';
+    const msg     = attending.length > 0
+      ? document.getElementById('group-msg-input').value.trim()
+      : document.getElementById('group-msg-input-no').value.trim();
     const phTime = new Date().toLocaleString('en-PH',{timeZone:'Asia/Manila'});
     const leadName = groupKey(group);
 
@@ -712,8 +778,8 @@
           attending: attending.length > 0 ? 'true' : 'false',
           guestCount: attending.length,
           guestNames: attendingNames,
-          dietary: '',
-          message: '',
+          dietary,
+          message: msg,
           timestamp: new Date().toISOString()
         });
         await fetch(`${APPS_SCRIPT_URL}?${params}`, { method:'GET', mode:'no-cors', redirect:'follow' });
@@ -728,7 +794,7 @@
       attending: attending.length > 0,
       guestCount: attending.length,
       guestNames: attendingNames,
-      dietary: '',
+      dietary,
       submittedAt: phTime
     });
 
@@ -742,6 +808,8 @@
       document.getElementById('ty-detail').innerHTML  = `
         <strong>Attending:</strong> ${attendingNames || 'None'} ✓<br>
         <strong>Party of:</strong> ${attending.length} ${attending.length===1?'person':'guests'}${declineNote}
+        ${dietary?`<br><strong>Dietary Notes:</strong> ${dietary}`:''}
+        ${msg?`<br><strong>Message:</strong> "${msg}"`:''}
       `;
     } else {
       document.getElementById('ty-icon').textContent  = '🕊️';
@@ -750,6 +818,7 @@
       document.getElementById('ty-detail').innerHTML  = `
         <strong>Guest(s):</strong> ${guestNames}<br>
         <strong>Response:</strong> Regretfully Declining
+        ${msg?`<br><strong>Message:</strong> "${msg}"`:''}
       `;
     }
 
@@ -762,6 +831,14 @@
     document.getElementById('step-1').classList.add('active');
     selectedGroup = null;
     groupMemberStates = [];
+    groupSelectedDietary.clear();
+    document.getElementById('group-extras').style.display = 'none';
+    document.getElementById('group-decline-extras').style.display = 'none';
+    document.getElementById('group-msg-input').value = '';
+    document.getElementById('group-msg-input-no').value = '';
+    document.getElementById('group-other-dietary-input').value = '';
+    document.getElementById('group-other-dietary-wrap').classList.remove('show');
+    document.querySelectorAll('#group-dietary-pills .dpill').forEach(p=>p.classList.remove('selected'));
     searchInput.focus();
   }
 
