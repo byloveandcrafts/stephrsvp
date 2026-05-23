@@ -164,6 +164,39 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);} }
     .fade-in { animation:fadeUp 0.7s ease both; }
     .fade-in-2 { animation:fadeUp 0.7s 0.15s ease both; }
+
+    /* ── Loading spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display:inline-block; width:18px; height:18px; border:2px solid rgba(201,112,112,0.25); border-top-color:var(--rose); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px; }
+    .search-loading { display:none; align-items:center; justify-content:center; gap:10px; padding:20px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--tan); }
+    .search-loading.show { display:flex; }
+    .submit-loading { display:none; align-items:center; justify-content:center; gap:8px; padding:14px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--rose); }
+    .submit-loading.show { display:flex; }
+
+    /* ── Group member cards (Step 1b) ── */
+    .group-card { background:rgba(255,250,247,0.95); border:1.5px solid rgba(160,96,96,0.14); border-radius:16px; padding:18px 20px; margin-bottom:14px; position:relative; animation:fadeUp 0.4s ease both; }
+    .group-card-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .group-label { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--tan); margin-bottom:10px; }
+    .member-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(160,96,96,0.07); }
+    .member-row:last-child { border-bottom:none; padding-bottom:0; }
+    .member-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--blush),var(--rose)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:13px; font-weight:600; color:white; flex-shrink:0; }
+    .member-name-wrap { flex:1; min-width:0; }
+    .member-name { font-family:'Cormorant Garamond',serif; font-size:17px; color:var(--text); }
+    .member-name-input { width:100%; padding:7px 14px; border:1.5px solid rgba(160,96,96,0.28); border-radius:50px; background:rgba(255,250,247,0.9); font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--text); outline:none; transition:border-color 0.2s,box-shadow 0.2s; margin-top:4px; }
+    .member-name-input:focus { border-color:var(--blush); box-shadow:0 0 0 3px rgba(212,160,160,0.14); }
+    .member-name-input::placeholder { color:var(--tan); font-style:italic; }
+    .member-toggle { display:flex; gap:6px; flex-shrink:0; }
+    .member-btn { width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(160,96,96,0.22); background:rgba(255,250,247,0.8); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+    .member-btn:hover { transform:scale(1.08); }
+    .member-btn.go { border-color:var(--rose); background:linear-gradient(135deg,rgba(212,160,160,0.2),rgba(160,96,96,0.1)); }
+    .member-btn.nogo { border-color:var(--beige-dark); background:rgba(200,180,175,0.12); }
+    .group-proceed-btn { display:block; width:100%; margin-top:16px; padding:13px; background:linear-gradient(135deg,var(--blush),var(--rose)); color:white; border:none; border-radius:50px; font-family:'Montserrat',sans-serif; font-size:10px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 18px rgba(160,96,96,0.22); transition:all 0.2s; }
+    .group-proceed-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(160,96,96,0.32); }
+    .group-proceed-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
+    .group-back-link { display:block; text-align:center; margin-top:10px; font-family:'Montserrat',sans-serif; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); cursor:pointer; background:none; border:none; padding:8px; width:100%; transition:color 0.2s; }
+    .group-back-link:hover { color:var(--rose); }
+    #step-1b { display:none; }
+    #step-1b.active { display:block; animation:fadeUp 0.5s ease both; }
   </style>
 </head>
 <body>
@@ -198,12 +231,25 @@
         <input type="text" id="search-input" class="search-input" placeholder="Search your name…" autocomplete="off" inputmode="search">
         <span class="search-icon">🔍</span>
       </div>
+      <div class="search-loading" id="search-loading"><div class="spinner"></div>Searching…</div>
       <ul class="results-list" id="results-list"></ul>
       <div class="note-box">
         With love, we have reserved seats especially for you. As our venue has limited seating capacity, we kindly ask that only those who have confirmed their RSVP attend and that the number of guests be limited to the seats indicated on your invitation.<br><br>
         While we would love to celebrate with everyone, we respectfully request that this invitation be extended only to the guests listed. We are unable to accommodate additional plus ones or unlisted companions.<br><br>
         Thank you for your kind understanding and for being part of our special day. ✨🤍
       </div>
+    </div>
+
+    <!-- STEP 1b: Group Member Selection -->
+    <div id="step-1b">
+      <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+      <h2 class="step-title">Your Party</h2>
+      <p class="step-sub" id="step1b-sub">Tap ✓ or ✗ for each person in your group</p>
+      <div class="step-divider"></div>
+      <div id="member-cards-wrap"></div>
+      <div class="submit-loading" id="group-submit-loading"><div class="spinner"></div>Sending your RSVP…</div>
+      <button class="group-proceed-btn" id="group-proceed-btn" onclick="proceedFromGroup()" disabled>Confirm Responses →</button>
+      <button class="group-back-link" onclick="backToSearch()">← Back to Search</button>
     </div>
 
     <!-- STEP 2: Confirm -->
@@ -289,6 +335,7 @@
         </div>
       </div>
 
+      <div class="submit-loading" id="submit-loading"><div class="spinner"></div>Sending your RSVP…</div>
       <button class="btn-primary" id="btn-confirm" onclick="submitRSVP()" disabled>Confirm →</button>
       <button class="btn-ghost" onclick="goBack()">← Change Name</button>
     </div>
@@ -472,12 +519,13 @@
     const firstName = group.names[0].split(' ')[0];
     document.getElementById('already-sub').textContent = `You've already sent your RSVP, ${firstName}. Your response is confirmed!`;
     document.getElementById('already-detail').innerHTML =
-      `<strong>Guest(s):</strong> ${group.names.filter(n=>!n.startsWith('+')&&n!=='Baby #1').join(', ')}<br>
+      `<strong>Guest(s):</strong> ${group.names.filter(n=>!isPlaceholder(n)).join(', ')}<br>
        <strong>Attending:</strong> ${prev.attending ? 'Joyfully Accepting ✓' : 'Regretfully Declining'}<br>
        ${prev.attending && prev.guestCount > 1 ? `<strong>Party of:</strong> ${prev.guestCount} guests<br>` : ''}
        ${prev.guestNames ? `<strong>Names:</strong> ${prev.guestNames}<br>` : ''}
        ${prev.dietary ? `<strong>Dietary Notes:</strong> ${prev.dietary}<br>` : ''}
        <strong>Submitted:</strong> ${prev.submittedAt||'—'}`;
+    document.getElementById('step-1b').classList.remove('active');
     goStep(4);
   }
 
@@ -496,52 +544,226 @@
   const searchInput = document.getElementById('search-input');
   const resultsList = document.getElementById('results-list');
 
+  // Detect "blank" / placeholder names that need real input
+  function isPlaceholder(name) {
+    return name.startsWith('+') || /^Maldita\s*\d+$/i.test(name) || name === 'Baby #1';
+  }
+
+  let searchTimer = null;
   searchInput.addEventListener('input', () => {
     const q = searchInput.value.trim();
     resultsList.innerHTML = '';
+    document.getElementById('search-loading').classList.remove('show');
+    clearTimeout(searchTimer);
     if (q.length < 2) return;
 
-    // Search all individual names; deduplicate by groupIndex
-    const seenGroups = new Set();
-    const matches = [];
-    SEARCH_INDEX.forEach(entry => {
-      if (fuzzyMatch(q, entry.displayName) && !seenGroups.has(entry.groupIndex)) {
-        seenGroups.add(entry.groupIndex);
-        matches.push(entry);
+    // Show spinner briefly for UX feel
+    document.getElementById('search-loading').classList.add('show');
+    searchTimer = setTimeout(() => {
+      document.getElementById('search-loading').classList.remove('show');
+
+      // Search all individual names; deduplicate by groupIndex
+      const seenGroups = new Set();
+      const matches = [];
+      SEARCH_INDEX.forEach(entry => {
+        if (fuzzyMatch(q, entry.displayName) && !seenGroups.has(entry.groupIndex)) {
+          seenGroups.add(entry.groupIndex);
+          matches.push(entry);
+        }
+      });
+
+      if (!matches.length) {
+        resultsList.innerHTML = `<li class="result-empty">No guest found for "<em>${q}</em>".<br>Please check spelling or contact the couple.</li>`;
+        return;
       }
+
+      matches.slice(0,8).forEach(entry => {
+        const group = GROUPS[entry.groupIndex];
+        const li = document.createElement('li');
+        li.className = 'result-item'; li.tabIndex = 0;
+        const realNames = group.names.filter(n=>!isPlaceholder(n));
+        const initials  = realNames[0].split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+        const done      = isAlreadySubmittedLocal(group);
+        const isGroup   = group.names.length > 1;
+        const primaryDisplay = highlight(entry.displayName, q);
+
+        li.innerHTML = `
+          <div class="result-avatar">${initials}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="result-name-text">${primaryDisplay}</div>
+          </div>
+          ${isGroup ? `<span class="result-group-badge">Group · ${group.maxGuests}pax</span>` : ''}
+          ${done ? '<span style="font-size:10px;letter-spacing:1px;color:var(--blush);white-space:nowrap;">✓ Done</span>' : ''}
+        `;
+        li.addEventListener('click', () => openGroup(group));
+        li.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') openGroup(group); });
+        resultsList.appendChild(li);
+      });
+    }, 280);
+  });
+
+  // ── State for group flow ──
+  let groupMemberStates = []; // [{name, resolvedName, choice}]
+
+  async function openGroup(group) {
+    selectedGroup = group;
+    // Show checking spinner inside the result item area
+    resultsList.innerHTML = `<li class="search-loading show" style="list-style:none"><div class="spinner"></div>Checking your RSVP status…</li>`;
+
+    const blocked = await checkAlreadySubmitted(group);
+    if (blocked) return;
+
+    // Build member states
+    groupMemberStates = group.names.map(name => ({
+      name,
+      resolvedName: isPlaceholder(name) ? '' : name,
+      choice: null // 'yes' | 'no'
+    }));
+
+    renderGroupStep(group);
+  }
+
+  function renderGroupStep(group) {
+    const wrap = document.getElementById('member-cards-wrap');
+    wrap.innerHTML = '';
+    const realCount = group.names.filter(n => !isPlaceholder(n) || groupMemberStates.find(m=>m.name===n)?.resolvedName).length;
+    document.getElementById('step1b-sub').textContent =
+      group.names.length === 1
+        ? 'Will you be attending?'
+        : `Tap ✓ or ✗ for each person in your group`;
+
+    groupMemberStates.forEach((member, idx) => {
+      const card = document.createElement('div');
+      card.className = 'member-row';
+      card.id = `mrow-${idx}`;
+
+      const nameDisplay = member.resolvedName || member.name;
+      const initials = (member.resolvedName || '?').split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
+
+      const needsName = isPlaceholder(member.name);
+
+      card.innerHTML = `
+        <div class="member-avatar" id="mavatar-${idx}">${needsName && !member.resolvedName ? '?' : initials}</div>
+        <div class="member-name-wrap">
+          ${needsName
+            ? `<input class="member-name-input" id="mname-input-${idx}" type="text"
+                 placeholder="Enter guest name…" value="${member.resolvedName}"
+                 oninput="updateMemberName(${idx}, this.value)">`
+            : `<div class="member-name">${nameDisplay}</div>`}
+        </div>
+        <div class="member-toggle">
+          <button class="member-btn ${member.choice==='yes'?'go':''}" id="mbtn-yes-${idx}"
+            onclick="setMemberChoice(${idx},'yes')" title="Attending">✓</button>
+          <button class="member-btn ${member.choice==='no'?'nogo':''}" id="mbtn-no-${idx}"
+            onclick="setMemberChoice(${idx},'no')" title="Not attending">✗</button>
+        </div>
+      `;
+      wrap.appendChild(card);
     });
 
-    if (!matches.length) {
-      resultsList.innerHTML = `<li class="result-empty">No guest found for "<em>${q}</em>".<br>Please check spelling or contact the couple.</li>`;
-      return;
+    // Show step 1b
+    document.getElementById('step-1').classList.remove('active');
+    document.getElementById('step-1b').classList.add('active');
+    updateGroupProceedBtn();
+  }
+
+  function updateMemberName(idx, val) {
+    groupMemberStates[idx].resolvedName = val.trim();
+    const initials = val.trim().split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
+    const av = document.getElementById(`mavatar-${idx}`);
+    if (av) av.textContent = initials || '?';
+    updateGroupProceedBtn();
+  }
+
+  function setMemberChoice(idx, choice) {
+    groupMemberStates[idx].choice = choice;
+    const yBtn = document.getElementById(`mbtn-yes-${idx}`);
+    const nBtn = document.getElementById(`mbtn-no-${idx}`);
+    if (yBtn) { yBtn.classList.toggle('go', choice==='yes'); yBtn.classList.remove('nogo'); }
+    if (nBtn) { nBtn.classList.toggle('nogo', choice==='no'); nBtn.classList.remove('go'); }
+    updateGroupProceedBtn();
+  }
+
+  function updateGroupProceedBtn() {
+    const allAnswered = groupMemberStates.every(m => m.choice !== null);
+    const allNamed    = groupMemberStates.every(m => !isPlaceholder(m.name) || m.resolvedName.length > 0);
+    document.getElementById('group-proceed-btn').disabled = !(allAnswered && allNamed);
+  }
+
+  async function proceedFromGroup() {
+    const group = selectedGroup;
+    const attending = groupMemberStates.filter(m => m.choice === 'yes');
+    const declining = groupMemberStates.filter(m => m.choice === 'no');
+
+    // Prepare submission payload
+    const guestNames = groupMemberStates.map(m => m.resolvedName || m.name).join(', ');
+    const attendingNames = attending.map(m => m.resolvedName || m.name).join(', ');
+    const phTime = new Date().toLocaleString('en-PH',{timeZone:'Asia/Manila'});
+    const leadName = groupKey(group);
+
+    const btn = document.getElementById('group-proceed-btn');
+    btn.disabled = true;
+    document.getElementById('group-submit-loading').classList.add('show');
+
+    try {
+      if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
+        const params = new URLSearchParams({
+          name: leadName,
+          attending: attending.length > 0 ? 'true' : 'false',
+          guestCount: attending.length,
+          guestNames: attendingNames,
+          dietary: '',
+          message: '',
+          timestamp: new Date().toISOString()
+        });
+        await fetch(`${APPS_SCRIPT_URL}?${params}`, { method:'GET', mode:'no-cors', redirect:'follow' });
+      }
+    } catch(err) { console.warn('Apps Script error:',err); }
+    finally {
+      document.getElementById('group-submit-loading').classList.remove('show');
+      btn.disabled = false;
     }
 
-    matches.slice(0,8).forEach(entry => {
-      const group = GROUPS[entry.groupIndex];
-      const li = document.createElement('li');
-      li.className = 'result-item'; li.tabIndex = 0;
-      const realNames = group.names.filter(n=>!n.startsWith('+')&&n!=='Baby #1');
-      const initials  = realNames[0].split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-      const done      = isAlreadySubmittedLocal(group);
-      const isGroup   = realNames.length > 1;
-      // Show the matched name first, then rest of group as sub-line
-      const primaryDisplay = highlight(entry.displayName, q);
-      const groupPreview   = isGroup ? realNames.filter(n=>n!==entry.displayName).join(', ') : '';
-
-      li.innerHTML = `
-        <div class="result-avatar">${initials}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="result-name-text">${primaryDisplay}</div>
-          ${isGroup && groupPreview ? `<div style="font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--tan);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${groupPreview}</div>` : ''}
-        </div>
-        ${isGroup ? `<span class="result-group-badge">Group · ${group.maxGuests}pax</span>` : ''}
-        ${done ? '<span style="font-size:10px;letter-spacing:1px;color:var(--blush);white-space:nowrap;">✓ Done</span>' : ''}
-      `;
-      li.addEventListener('click', () => selectGroup(group));
-      li.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') selectGroup(group); });
-      resultsList.appendChild(li);
+    markSubmitted(leadName, {
+      attending: attending.length > 0,
+      guestCount: attending.length,
+      guestNames: attendingNames,
+      dietary: '',
+      submittedAt: phTime
     });
-  });
+
+    // Show thank you
+    const firstName = (attending[0] || groupMemberStates[0]).resolvedName?.split(' ')[0] || leadName.split(' ')[0];
+    if (attending.length > 0) {
+      document.getElementById('ty-icon').textContent  = '💕';
+      document.getElementById('ty-title').textContent = 'Thank You!';
+      document.getElementById('ty-sub').textContent   = `We're so thrilled you're coming, ${firstName}!`;
+      const declineNote = declining.length > 0 ? `<br><strong>Regretfully Declining:</strong> ${declining.map(m=>m.resolvedName||m.name).join(', ')}` : '';
+      document.getElementById('ty-detail').innerHTML  = `
+        <strong>Attending:</strong> ${attendingNames || 'None'} ✓<br>
+        <strong>Party of:</strong> ${attending.length} ${attending.length===1?'person':'guests'}${declineNote}
+      `;
+    } else {
+      document.getElementById('ty-icon').textContent  = '🕊️';
+      document.getElementById('ty-title').textContent = "We'll Miss You";
+      document.getElementById('ty-sub').textContent   = `Thank you for letting us know, ${firstName}. You'll be in our hearts.`;
+      document.getElementById('ty-detail').innerHTML  = `
+        <strong>Guest(s):</strong> ${guestNames}<br>
+        <strong>Response:</strong> Regretfully Declining
+      `;
+    }
+
+    document.getElementById('step-1b').classList.remove('active');
+    goStep(3);
+  }
+
+  function backToSearch() {
+    document.getElementById('step-1b').classList.remove('active');
+    document.getElementById('step-1').classList.add('active');
+    selectedGroup = null;
+    groupMemberStates = [];
+    searchInput.focus();
+  }
 
   async function selectGroup(group) {
     selectedGroup = group;
@@ -549,11 +771,10 @@
     if (blocked) return;
 
     attendChoice = null;
-    guestCount   = group.names.length; // start = full group size
+    guestCount   = group.names.length;
     selectedDietary.clear();
 
-    // Show group names in the banner
-    const realNames = group.names.filter(n=>!n.startsWith('+')&&n!=='Baby #1');
+    const realNames = group.names.filter(n=>!isPlaceholder(n));
     const initials  = realNames[0].split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const bannerLabel = realNames.length > 1 ? realNames.join(' · ') : realNames[0];
 
@@ -620,7 +841,7 @@
       // Pre-fill from group names; fall back to what user typed; then empty
       const prefill = existing[i] !== undefined
         ? existing[i]
-        : (selectedGroup.names[i] && !selectedGroup.names[i].startsWith('+') && selectedGroup.names[i] !== 'Baby #1'
+        : (selectedGroup.names[i] && !isPlaceholder(selectedGroup.names[i])
             ? selectedGroup.names[i]
             : '');
 
@@ -689,7 +910,8 @@
     const payload = { name:leadName, attending:attendChoice==='yes', guestCount:attendChoice==='yes'?guestCount:0, guestNames, dietary, message:msg, timestamp:new Date().toISOString() };
 
     const btn = document.getElementById('btn-confirm');
-    btn.disabled=true; btn.textContent='Sending… 💌';
+    btn.disabled=true; btn.style.display='none';
+    document.getElementById('submit-loading').classList.add('show');
 
     try {
       if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
@@ -697,7 +919,10 @@
         await fetch(`${APPS_SCRIPT_URL}?${params}`, { method:'GET', mode:'no-cors', redirect:'follow' });
       }
     } catch(err) { console.warn('Apps Script error:',err); }
-    finally { btn.disabled=false; btn.textContent='Confirm →'; }
+    finally {
+      btn.disabled=false; btn.style.display='block';
+      document.getElementById('submit-loading').classList.remove('show');
+    }
 
     markSubmitted(leadName, { attending:payload.attending, guestCount:payload.guestCount, guestNames, dietary, submittedAt:phTime });
 
@@ -729,6 +954,8 @@
 
   function goBack() {
     selectedGroup=null; attendChoice=null; guestCount=1; selectedDietary.clear();
+    groupMemberStates=[];
+    document.getElementById('step-1b').classList.remove('active');
     goStep(1); searchInput.value=''; resultsList.innerHTML=''; searchInput.focus();
   }
 
