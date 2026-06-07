@@ -197,6 +197,21 @@
     .group-back-link:hover { color:var(--rose); }
     #step-1b { display:none; }
     #step-1b.active { display:block; animation:fadeUp 0.5s ease both; }
+
+    /* Per-member dietary accordion */
+    .member-dietary-wrap { display:none; padding:12px 0 4px 44px; animation:fadeUp 0.3s ease both; }
+    .member-dietary-wrap.show { display:block; }
+    .member-dietary-label { font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--blush); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .member-dietary-name { color:var(--rose); font-weight:500; }
+    .member-dietary-pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+    .member-dpill { padding:5px 11px; border-radius:50px; border:1.5px solid rgba(160,96,96,0.22); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); background:rgba(255,250,247,0.7); cursor:pointer; transition:all 0.2s; user-select:none; }
+    .member-dpill:hover { border-color:var(--blush); }
+    .member-dpill.selected { background:linear-gradient(135deg,rgba(212,160,160,0.25),rgba(160,96,96,0.12)); border-color:var(--rose); color:var(--rose); }
+    .member-dpill-other-wrap { display:none; margin-top:4px; }
+    .member-dpill-other-wrap.show { display:block; }
+    .member-row-wrap { border-bottom:1px solid rgba(160,96,96,0.07); }
+    .member-row-wrap:last-child { border-bottom:none; }
+    .member-row { border-bottom:none !important; }
   </style>
 </head>
 <body>
@@ -248,26 +263,9 @@
       <div class="step-divider"></div>
       <div id="member-cards-wrap"></div>
 
-      <!-- Dietary + Message — shown only when someone is attending -->
+      <!-- Message — shown only when someone is attending -->
       <div id="group-extras" style="display:none;margin-top:22px;">
         <div class="step-divider"></div>
-        <div class="field-group">
-          <label class="field-label">🌿 Dietary Restrictions or Allergies</label>
-          <span class="field-sub">Do any of your party have dietary needs? (optional)</span>
-          <div class="dietary-pills" id="group-dietary-pills">
-            <span class="dpill" data-value="Vegetarian"      onclick="toggleGPill(this)">🥦 Vegetarian</span>
-            <span class="dpill" data-value="Vegan"           onclick="toggleGPill(this)">🌱 Vegan</span>
-            <span class="dpill" data-value="Halal"           onclick="toggleGPill(this)">☪️ Halal</span>
-            <span class="dpill" data-value="Gluten-Free"     onclick="toggleGPill(this)">🌾 Gluten-Free</span>
-            <span class="dpill" data-value="Nut Allergy"     onclick="toggleGPill(this)">🥜 Nut Allergy</span>
-            <span class="dpill" data-value="Seafood Allergy" onclick="toggleGPill(this)">🦐 Seafood Allergy</span>
-            <span class="dpill" data-value="Dairy-Free"      onclick="toggleGPill(this)">🥛 Dairy-Free</span>
-            <span class="dpill" data-value="Other"           onclick="toggleGPillOther(this)">✏️ Other</span>
-          </div>
-          <div class="dpill-other-wrap" id="group-other-dietary-wrap">
-            <input type="text" class="guest-name-input" id="group-other-dietary-input" placeholder="Please specify…" style="margin-bottom:0;">
-          </div>
-        </div>
         <div class="field-group">
           <label class="field-label">Leave a message (optional)</label>
           <textarea class="msg-textarea" id="group-msg-input" placeholder="Share a warm wish for the couple…" rows="3"></textarea>
@@ -414,7 +412,7 @@
 <script>
   // ✏️  Paste your Google Apps Script Web App URL below after deploying
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYI5IumE4NR-fEEWaEwYV0dw7cfB0dY_S5WLab_b3Aig-QQfgUtXRcqgpQuiB1j7Dvxw/exec';
-  const STORAGE_KEY     = 'ns_rsvp_2026';
+  const STORAGE_KEY     = 'ns_rsvp';
 
   // ══════════════════════════════════════════════════════
   // GUEST LIST — group-based
@@ -652,7 +650,8 @@
     groupMemberStates = group.names.map(name => ({
       name,
       resolvedName: isPlaceholder(name) ? '' : name,
-      choice: null // 'yes' | 'no'
+      choice: null, // 'yes' | 'no'
+      dietary: new Set()
     }));
 
     renderGroupStep(group);
@@ -667,14 +666,27 @@
         ? 'Will you be attending?'
         : `Tap ✓ or ✗ for each person in your group`;
 
+    const DPILL_OPTIONS = [
+      { value:'Vegetarian', label:'🥦 Vegetarian' },
+      { value:'Vegan',      label:'🌱 Vegan' },
+      { value:'Halal',      label:'☪️ Halal' },
+      { value:'Gluten-Free',label:'🌾 Gluten-Free' },
+      { value:'Nut Allergy',label:'🥜 Nut Allergy' },
+      { value:'Seafood Allergy',label:'🦐 Seafood Allergy' },
+      { value:'Dairy-Free', label:'🥛 Dairy-Free' },
+      { value:'Other',      label:'✏️ Other' },
+    ];
+
     groupMemberStates.forEach((member, idx) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'member-row-wrap';
+
       const card = document.createElement('div');
       card.className = 'member-row';
       card.id = `mrow-${idx}`;
 
       const nameDisplay = member.resolvedName || member.name;
       const initials = (member.resolvedName || '?').split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
-
       const needsName = isPlaceholder(member.name);
 
       card.innerHTML = `
@@ -693,7 +705,33 @@
             onclick="setMemberChoice(${idx},'no')" title="Not attending">✗</button>
         </div>
       `;
-      wrap.appendChild(card);
+
+      // Per-member dietary section
+      const dietWrap = document.createElement('div');
+      dietWrap.className = 'member-dietary-wrap' + (member.choice === 'yes' ? ' show' : '');
+      dietWrap.id = `mdiet-${idx}`;
+
+      const pillsHtml = DPILL_OPTIONS.map(opt =>
+        opt.value === 'Other'
+          ? `<span class="member-dpill${member.dietary.has('Other')?' selected':''}" data-value="Other" onclick="toggleMemberPillOther(${idx},this)">${opt.label}</span>`
+          : `<span class="member-dpill${member.dietary.has(opt.value)?' selected':''}" data-value="${opt.value}" onclick="toggleMemberPill(${idx},this)">${opt.label}</span>`
+      ).join('');
+
+      dietWrap.innerHTML = `
+        <div class="member-dietary-label">
+          🌿 Dietary Restrictions —
+          <span class="member-dietary-name" id="mdiet-name-${idx}">${needsName && !member.resolvedName ? 'This guest' : (member.resolvedName || member.name).split(' ')[0]}</span>
+          <span style="color:var(--tan);font-size:9px;font-style:italic;">(optional)</span>
+        </div>
+        <div class="member-dietary-pills">${pillsHtml}</div>
+        <div class="member-dpill-other-wrap${member.dietary.has('Other')?' show':''}" id="mdiet-other-wrap-${idx}">
+          <input type="text" class="guest-name-input" id="mdiet-other-input-${idx}" placeholder="Please specify…" style="margin-bottom:0;font-size:14px;">
+        </div>
+      `;
+
+      wrapper.appendChild(card);
+      wrapper.appendChild(dietWrap);
+      wrap.appendChild(wrapper);
     });
 
     // Show step 1b
@@ -707,25 +745,46 @@
     const initials = val.trim().split(/[\s,]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
     const av = document.getElementById(`mavatar-${idx}`);
     if (av) av.textContent = initials || '?';
+    // Update the dietary label name
+    const nameLabel = document.getElementById(`mdiet-name-${idx}`);
+    if (nameLabel) nameLabel.textContent = val.trim() ? val.trim().split(' ')[0] : 'This guest';
     updateGroupProceedBtn();
   }
 
-  let groupSelectedDietary = new Set();
-
-  function toggleGPill(el) {
+  // ── Per-member dietary helpers ──
+  function toggleMemberPill(idx, el) {
     el.classList.toggle('selected');
-    if (el.classList.contains('selected')) groupSelectedDietary.add(el.dataset.value);
-    else groupSelectedDietary.delete(el.dataset.value);
+    if (el.classList.contains('selected')) groupMemberStates[idx].dietary.add(el.dataset.value);
+    else groupMemberStates[idx].dietary.delete(el.dataset.value);
   }
-  function toggleGPillOther(el) {
+  function toggleMemberPillOther(idx, el) {
     el.classList.toggle('selected');
-    document.getElementById('group-other-dietary-wrap').classList.toggle('show', el.classList.contains('selected'));
+    const wrap = document.getElementById(`mdiet-other-wrap-${idx}`);
+    if (wrap) wrap.classList.toggle('show', el.classList.contains('selected'));
+    if (el.classList.contains('selected')) groupMemberStates[idx].dietary.add('Other');
+    else groupMemberStates[idx].dietary.delete('Other');
   }
-  function getGroupDietaryNotes() {
-    const pills = Array.from(groupSelectedDietary).filter(v=>v!=='Other');
-    const other = document.getElementById('group-other-dietary-input').value.trim();
+  function getMemberDietary(idx) {
+    const member = groupMemberStates[idx];
+    const pills = Array.from(member.dietary).filter(v => v !== 'Other');
+    const otherInput = document.getElementById(`mdiet-other-input-${idx}`);
+    const other = otherInput ? otherInput.value.trim() : '';
     if (other) pills.push(other);
     return pills.join(', ');
+  }
+  function getGroupDietaryNotes() {
+    // Build per-person labeled string: "Name: restriction1, restriction2 | Name2: ..."
+    const parts = groupMemberStates
+      .filter(m => m.choice === 'yes')
+      .map((m, _) => {
+        const realIdx = groupMemberStates.indexOf(m);
+        const notes = getMemberDietary(realIdx);
+        if (!notes) return null;
+        const displayName = (m.resolvedName || m.name).split(' ')[0];
+        return `${displayName}: ${notes}`;
+      })
+      .filter(Boolean);
+    return parts.join(' | ');
   }
 
   function updateGroupExtras() {
@@ -742,6 +801,11 @@
     const nBtn = document.getElementById(`mbtn-no-${idx}`);
     if (yBtn) { yBtn.classList.toggle('go', choice==='yes'); yBtn.classList.remove('nogo'); }
     if (nBtn) { nBtn.classList.toggle('nogo', choice==='no'); nBtn.classList.remove('go'); }
+
+    // Show/hide this member's dietary section
+    const dietWrap = document.getElementById(`mdiet-${idx}`);
+    if (dietWrap) dietWrap.classList.toggle('show', choice === 'yes');
+
     updateGroupExtras();
     updateGroupProceedBtn();
   }
@@ -808,7 +872,7 @@
       document.getElementById('ty-detail').innerHTML  = `
         <strong>Attending:</strong> ${attendingNames || 'None'} ✓<br>
         <strong>Party of:</strong> ${attending.length} ${attending.length===1?'person':'guests'}${declineNote}
-        ${dietary?`<br><strong>Dietary Notes:</strong> ${dietary}`:''}
+        ${dietary?`<br><strong>Dietary Notes:</strong><br><span style="font-size:15px;">${dietary.replace(/ \| /g,'<br>')}</span>`:''}
         ${msg?`<br><strong>Message:</strong> "${msg}"`:''}
       `;
     } else {
@@ -831,14 +895,10 @@
     document.getElementById('step-1').classList.add('active');
     selectedGroup = null;
     groupMemberStates = [];
-    groupSelectedDietary.clear();
     document.getElementById('group-extras').style.display = 'none';
     document.getElementById('group-decline-extras').style.display = 'none';
     document.getElementById('group-msg-input').value = '';
     document.getElementById('group-msg-input-no').value = '';
-    document.getElementById('group-other-dietary-input').value = '';
-    document.getElementById('group-other-dietary-wrap').classList.remove('show');
-    document.querySelectorAll('#group-dietary-pills .dpill').forEach(p=>p.classList.remove('selected'));
     searchInput.focus();
   }
 
