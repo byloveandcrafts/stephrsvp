@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RSVP · Noly & Steph</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&family=Tenor+Sans&family=Cinzel:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&family=Tenor+Sans&family=Cinzel:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --blush: #f8b9b9;
@@ -29,7 +29,7 @@
     .rsvp-eyebrow { font-size:9px; letter-spacing:5px; text-transform:uppercase; color:var(--tan); margin-bottom:12px; }
     .rsvp-couple {
       font-family:'Cinzel', serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: clamp(36px, 8vw, 76px);
       color: var(--rose-deep);
       line-height: 1.15;
@@ -38,7 +38,7 @@
       text-shadow: 0 2px 24px rgba(200,112,112,0.12);
     }
     .rsvp-amp { display:block; font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:clamp(28px,5vw,52px); color:var(--blush); opacity:0.85; letter-spacing:0.08em; margin:4px 0; }
-    .rsvp-date { margin-top:16px; font-size:10px; letter-spacing:5px; text-transform:uppercase; color:var(--text-muted); }
+    .rsvp-date { margin-top:16px; font-size:11px; letter-spacing:5px; text-transform:uppercase; color:var(--text); font-weight:500; }
     .header-divider { width:80px; height:1px; background:linear-gradient(to right,transparent,var(--blush),transparent); margin:16px auto 0; }
     .header-venue { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--tan); margin-top:10px; }
 
@@ -155,11 +155,12 @@
 
     /* Footer */
     .page-footer { margin-top:40px; text-align:center; }
-    .footer-names { font-family:'Cinzel',serif; font-weight:300; font-size:22px; letter-spacing:0.22em; text-transform:uppercase; color:var(--rose-deep); margin-bottom:6px; }
-    .footer-date { font-size:9px; letter-spacing:4px; text-transform:uppercase; color:var(--text-muted); }
+    .footer-names { font-family:'Cinzel',serif; font-weight:500; font-size:22px; letter-spacing:0.22em; text-transform:uppercase; color:var(--rose-deep); margin-bottom:6px; }
+    .footer-date { font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--text); font-weight:500; }
 
     /* Note box */
     .note-box { background:rgba(248,185,185,0.12); border:1px solid rgba(248,185,185,0.45); border-radius:12px; padding:18px 20px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--text-muted); line-height:1.85; margin-top:20px; text-align:center; }
+    .note-box strong { font-style:normal; color:var(--text); }
 
     @keyframes fadeUp { from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);} }
     .fade-in { animation:fadeUp 0.7s ease both; }
@@ -223,8 +224,8 @@
   <header class="rsvp-header fade-in">
     <p class="rsvp-eyebrow">You are cordially invited to confirm</p>
     <div class="rsvp-couple">Noly<span class="rsvp-amp">&</span>Steph</div>
-    <p class="rsvp-date">St. John Bosco · Makati &nbsp;|&nbsp; 1:30 PM</p>
-    <div class="header-venue">Reception: Makati Diamond Residences</div>
+    <p class="rsvp-date">St. John Bosco Parish &nbsp;|&nbsp; Makati Diamond Residences</p>
+    <p class="rsvp-date" style="margin-top:6px;">October 24, 2026 &nbsp;|&nbsp; 1:30 PM</p>
     <div class="header-divider"></div>
   </header>
 
@@ -249,9 +250,9 @@
       <div class="search-loading" id="search-loading"><div class="spinner"></div>Searching…</div>
       <ul class="results-list" id="results-list"></ul>
       <div class="note-box">
-        With love, we have reserved seats especially for you. As our venue has limited seating capacity, we kindly ask that only those who have confirmed their RSVP attend and that the number of guests be limited to the seats indicated on your invitation.<br><br>
-        While we would love to celebrate with everyone, we respectfully request that this invitation be extended only to the guests listed. We are unable to accommodate additional plus ones or unlisted companions.<br><br>
-        Thank you for your kind understanding and for being part of our special day. ✨🤍
+        <strong>Note:</strong> Only guests who have confirmed their RSVP will attend.
+        <strong>STRICTLY NO PLUS ONE.</strong>
+        Please refer to the number of guests allotted for you. Thank you for understanding.
       </div>
     </div>
 
@@ -404,7 +405,7 @@
 
   <footer class="page-footer fade-in">
     <div class="footer-names">Noly & Steph</div>
-    <p class="footer-date">October 24, 2026 - Saturday · Makati</p>
+    <p class="footer-date">10 • 24 • 2026 &nbsp;|&nbsp; Saturday &nbsp;|&nbsp; Makati</p>
   </footer>
 
 </div>
@@ -428,15 +429,15 @@
     { names: ["Imelda Geroche","Norwen Geroche","Elaiza Mae Prado","Nathalie May Geroche"],  maxGuests: 4 },
     { names: ["Danielle Langit","Algene Cabaylo","Damien Cabaylo","Allister Cabaylo"],       maxGuests: 4 },
     { names: ["Glecyline Salanguit","Alvin Salanguit","Arziolo Salanguit","Alvia Salanguit"],maxGuests: 4 },
-    { names: ["Paola Langit","Migs Castaneda"],                                              maxGuests: 2 },
+    { names: ["Paola Langit","Miguel Love"],                                                 maxGuests: 2 },
     { names: ["Hannah Villarante","Kurt Villarante","Baby #1"],                              maxGuests: 3 },
     { names: ["Pedro Langit","Marivic Langit"],                                              maxGuests: 2 },
     { names: ["Maria Margaret Thatcher Ang","Alexis Ang II","Alexander Ang III","Aslan Ang"],maxGuests: 4 },
-    { names: ["Dennis Langit","Kuya EJ"],                                                    maxGuests: 2 },
+    { names: ["Dennis Langit","Earl John Esmenos"],                                          maxGuests: 2 },
     { names: ["Joecel Langit","Noni"],                                                       maxGuests: 2 },
     { names: ["Louie Clamor","Claire Clamor"],                                               maxGuests: 2 },
     { names: ["Ester Clamor","Wilfredo Clamor"],                                             maxGuests: 2 },
-    { names: ["Jean Ochoa","Kyle"],                                                          maxGuests: 2 },
+    { names: ["Jean Ochoa","Kyle Bagnes"],                                                   maxGuests: 2 },
     { names: ["Clariza May Semira","Lloyd Soro"],                                            maxGuests: 2 },
     { names: ["Mary Josephine Camayra","Joemel Camayra"],                                    maxGuests: 2 },
     { names: ["Delia Mallillin","Jayvee Mallillin"],                                         maxGuests: 2 },
@@ -447,17 +448,17 @@
     { names: ["Cecilia Gatchalian","+1"],                                                    maxGuests: 2 },
     { names: ["Naida Taliman","Froilan Taliman"],                                            maxGuests: 2 },
     { names: ["Ma. Aurora Banog","Elijo Banog"],                                             maxGuests: 2 },
-    { names: ["Gabriel Tabay","+1","+1","+1","+1"],                                         maxGuests: 5 },
+    { names: ["Gabriel Tabay","+1","+1","+1","+1"],                                          maxGuests: 5 },
     { names: ["Marilyn H. Geroche","Lannie D. Geroche","J-lyn Faith G. Vila"],               maxGuests: 3 },
     { names: ["Alfredo B. Mauricio II","Alfredo D. Mauricio","Jocelyn B. Mauricio"],         maxGuests: 3 },
-    { names: ["Karleslee B. Lopez","Norgie B. Lopez","Kurtlee B. Lopez","Kylo Lopez"],       maxGuests: 4 },
+    { names: ["Karleslee B. Lopez","Norgie B. Lopez","Kurtlee B. Lopez","Kyrie Louis L. Tumale"], maxGuests: 4 },
     { names: ["May Jane Geroche","Emelia Geroche"],                                          maxGuests: 2 },
     { names: ["Janessa Susan Cruz","+1"],                                                    maxGuests: 2 },
     { names: ["Lilia H. Serna","+1"],                                                        maxGuests: 2 },
     { names: ["Ma. Frances A. Geronimo","+1"],                                               maxGuests: 2 },
     { names: ["Daisy I. Pedrez","+1"],                                                       maxGuests: 2 },
     { names: ["Rudy S. Galutera","+1"],                                                      maxGuests: 2 },
-    { names: ["Erika Alex","+1"],                                                            maxGuests: 2 },
+    { names: ["Erika Rubino","Alex Rubino"],                                                 maxGuests: 2 },
 
     // ── 1-pax solo guests ─────────────────────────────────
     { names: ["Czarinah Marie Langit"],  maxGuests: 1 },
@@ -466,9 +467,12 @@
     { names: ["Reynaldo Langit"],        maxGuests: 1 },
     { names: ["Wreigh Miguel Langit"],   maxGuests: 1 },
     { names: ["Neil Langit"],            maxGuests: 1 },
+    { names: ["Pedro Gabriel Langit"],   maxGuests: 1 },
     { names: ["Gabriel Langit"],         maxGuests: 1 },
     { names: ["Frederique Langit"],      maxGuests: 1 },
     { names: ["Peter Paul Langit"],      maxGuests: 1 },
+    { names: ["Peter John Langit"],      maxGuests: 1 },
+    { names: ["John Quiel Reano"],       maxGuests: 1 },
     { names: ["Peter John"],             maxGuests: 1 },
     { names: ["Queil"],                  maxGuests: 1 },
     { names: ["Adelyn Garcia"],          maxGuests: 1 },
