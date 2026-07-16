@@ -414,6 +414,14 @@
   // ✏️  Paste your Google Apps Script Web App URL below after deploying
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYI5IumE4NR-fEEWaEwYV0dw7cfB0dY_S5WLab_b3Aig-QQfgUtXRcqgpQuiB1j7Dvxw/exec';
   const STORAGE_KEY     = 'ns_rsvp';
+  // Must exactly match SECRET_TOKEN in the Apps Script's Script Properties.
+  // NOTE: since this file lives in a public repo, this token is NOT a real secret —
+  // anyone who reads the source can copy it. Its job is only to filter out generic/
+  // automated bots that blindly hit exposed Apps Script URLs without reading your
+  // source. The actual protection against real abuse is server-side: the guest-list
+  // whitelist check, required-field validation, duplicate-guard, and rate limiting
+  // that now live in Code.gs. See the message accompanying this file for details.
+  const RSVP_TOKEN = 'ns-2026-rsvp-6f2a9d';
 
   // ══════════════════════════════════════════════════════
   // GUEST LIST — group-based
@@ -424,17 +432,17 @@
   // ══════════════════════════════════════════════════════
   const GROUPS = [
     // ── Groups (merged invitations) ──────────────────────
-    { names: ["Khris Penales","Angelo Penales","Andrea Sage Penales"],                       maxGuests: 3 },
-    { names: ["Tricia Sienkiewicz","Jordan Sienkiewicz","Agostos Sienkiewicz"],              maxGuests: 3 },
+    { names: ["Khris Mae Penales","Angelo Penales","Andrea Sage Penales"],                   maxGuests: 3 },
+    { names: ["Tricia Kaye Sienkiewicz","Jordan Sienkiewicz","Agostos Sienkiewicz"],          maxGuests: 3 },
     { names: ["Imelda Geroche","Norwen Geroche","Elaiza Mae Prado","Nathalie May Geroche"],  maxGuests: 4 },
-    { names: ["Danielle Langit","Algene Cabaylo","Damien Cabaylo","Allister Cabaylo"],       maxGuests: 4 },
-    { names: ["Glecyline Salanguit","Alvin Salanguit","Arziolo Salanguit","Alvia Salanguit"],maxGuests: 4 },
+    { names: ["Danielle Langit","Algene Cabaylo"],                                           maxGuests: 2 },
+    { names: ["Glecyline Salanguit","Alvin Salanguit"],                                      maxGuests: 2 },
     { names: ["Paola Langit","Miguel Love"],                                                 maxGuests: 2 },
     { names: ["Hannah Villarante","Kurt Villarante","Baby #1"],                              maxGuests: 3 },
     { names: ["Pedro Langit","Marivic Langit"],                                              maxGuests: 2 },
-    { names: ["Maria Margaret Thatcher Ang","Alexis Ang II","Alexander Ang III","Aslan Ang"],maxGuests: 4 },
+    { names: ["Maria Margaret Thatcher Ang","Alexis Ang II"],                                maxGuests: 2 },
     { names: ["Dennis Langit","Earl John Esmenos"],                                          maxGuests: 2 },
-    { names: ["Joecel Langit","Noni"],                                                       maxGuests: 2 },
+    { names: ["Joecel Langit","Noni Macairan"],                                              maxGuests: 2 },
     { names: ["Louie Clamor","Claire Clamor"],                                               maxGuests: 2 },
     { names: ["Ester Clamor","Wilfredo Clamor"],                                             maxGuests: 2 },
     { names: ["Jean Ochoa","Kyle Bagnes"],                                                   maxGuests: 2 },
@@ -444,11 +452,11 @@
     { names: ["Catrina Mabutas","Ron Paculanan"],                                            maxGuests: 2 },
     { names: ["Fretzie Murawski","Dalvin Murawski"],                                         maxGuests: 2 },
     { names: ["Gemma Gautani","Gerome Gautani"],                                             maxGuests: 2 },
-    { names: ["George Cruz","Marivic Cruz","+1","+1"],                                       maxGuests: 4 },
+    { names: ["George Cruz","Marivic Cruz","+1","+1","+1"],                                  maxGuests: 5 },
     { names: ["Cecilia Gatchalian","+1"],                                                    maxGuests: 2 },
     { names: ["Naida Taliman","Froilan Taliman"],                                            maxGuests: 2 },
     { names: ["Ma. Aurora Banog","Elijo Banog"],                                             maxGuests: 2 },
-    { names: ["Gabriel Tabay","+1","+1","+1","+1"],                                          maxGuests: 5 },
+    { names: ["Gabriel Tabay","+1","+1","+1","+1","+1"],                                     maxGuests: 6 },
     { names: ["Marilyn H. Geroche","Lannie D. Geroche","J-lyn Faith G. Vila"],               maxGuests: 3 },
     { names: ["Alfredo B. Mauricio II","Alfredo D. Mauricio","Jocelyn B. Mauricio"],         maxGuests: 3 },
     { names: ["Karleslee B. Lopez","Norgie B. Lopez","Kurtlee B. Lopez","Kyrie Louis L. Tumale"], maxGuests: 4 },
@@ -490,15 +498,6 @@
     { names: ["Analyn Baldonado"],       maxGuests: 1 },
     { names: ["Miguel Simpao"],          maxGuests: 1 },
 
-    // ── Malditas ──────────────────────────────────────────
-    { names: ["Maldita 1"], maxGuests: 1 },
-    { names: ["Maldita 2"], maxGuests: 1 },
-    { names: ["Maldita 3"], maxGuests: 1 },
-    { names: ["Maldita 4"], maxGuests: 1 },
-    { names: ["Maldita 5"], maxGuests: 1 },
-    { names: ["Maldita 6"], maxGuests: 1 },
-    { names: ["Maldita 7"], maxGuests: 1 },
-    { names: ["Maldita 8"], maxGuests: 1 },
   ];
 
   // Build a flat searchable index: each item points back to its group
@@ -534,7 +533,7 @@
     if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
       try {
         const name = groupKey(group);
-        const params = new URLSearchParams({ action:'check', name });
+        const params = new URLSearchParams({ action:'check', name, token:RSVP_TOKEN });
         const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),5000);
         const res = await fetch(`${APPS_SCRIPT_URL}?${params}`, { signal:ctrl.signal });
         clearTimeout(t);
@@ -838,7 +837,9 @@
 
     try {
       if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
-        const params = new URLSearchParams({
+        const payload = {
+          action: 'submit',
+          token: RSVP_TOKEN,
           name: leadName,
           attending: attending.length > 0 ? 'true' : 'false',
           guestCount: attending.length,
@@ -846,8 +847,8 @@
           dietary,
           message: msg,
           timestamp: new Date().toISOString()
-        });
-        await fetch(`${APPS_SCRIPT_URL}?${params}`, { method:'GET', mode:'no-cors', redirect:'follow' });
+        };
+        await fetch(APPS_SCRIPT_URL, { method:'POST', mode:'no-cors', redirect:'follow', body: JSON.stringify(payload) });
       }
     } catch(err) { console.warn('Apps Script error:',err); }
     finally {
@@ -1053,8 +1054,8 @@
 
     try {
       if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
-        const params = new URLSearchParams({ name:payload.name, attending:payload.attending?'true':'false', guestCount:payload.guestCount, guestNames, dietary, message:msg, timestamp:payload.timestamp });
-        await fetch(`${APPS_SCRIPT_URL}?${params}`, { method:'GET', mode:'no-cors', redirect:'follow' });
+        const body = { action:'submit', token:RSVP_TOKEN, name:payload.name, attending:payload.attending?'true':'false', guestCount:payload.guestCount, guestNames, dietary, message:msg, timestamp:payload.timestamp };
+        await fetch(APPS_SCRIPT_URL, { method:'POST', mode:'no-cors', redirect:'follow', body: JSON.stringify(body) });
       }
     } catch(err) { console.warn('Apps Script error:',err); }
     finally {
