@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RSVP · Noly & Steph</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&family=Tenor+Sans&family=Cinzel:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
     :root {
       --blush: #f8b9b9;
@@ -216,6 +217,7 @@
   </style>
 </head>
 <body>
+  <div id="turnstile-widget" class="cf-turnstile" data-sitekey="0x4AAAAAAD7-WQHBF8hG-vdi" data-size="invisible" data-execution="execute" data-callback="onTurnstileToken" data-error-callback="onTurnstileError"></div>
 
 <canvas id="petal-canvas"></canvas>
 
@@ -412,8 +414,8 @@
 
 <script>
   // ✏️  Paste your Google Apps Script Web App URL below after deploying
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5fun8pObDM_nsI7xsnCaPjqlZmmLaFe6xZgckDauRTWXECndqjc4leSfiquo4TE1G6w/exec';
-  const STORAGE_KEY     = 'ns_rsvp1';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypPMmdvxr61nDT9I7WV6FyewHh-hNBK3bnusr0SLReX-oZPwjqkur2MJ-J-scMUvoFhg/exec';
+  const STORAGE_KEY     = 'ns_rsvp';
   // Must exactly match SECRET_TOKEN in the Apps Script's Script Properties.
   // NOTE: since this file lives in a public repo, this token is NOT a real secret —
   // anyone who reads the source can copy it. Its job is only to filter out generic/
@@ -422,6 +424,32 @@
   // whitelist check, required-field validation, duplicate-guard, and rate limiting
   // that now live in Code.gs. See the message accompanying this file for details.
   const RSVP_TOKEN = 'ns-2026-rsvp-6f2a9d';
+
+  // ── Cloudflare Turnstile (invisible bot check) ──────────
+  // Runs right before each submission. If Turnstile fails to load or
+  // errors out, we resolve with null and let the server-side check in
+  // Code.gs reject the submission — fail closed, not open.
+  let _turnstileResolve = null;
+
+  function onTurnstileToken(token) {
+    if (_turnstileResolve) { _turnstileResolve(token); _turnstileResolve = null; }
+  }
+  function onTurnstileError() {
+    if (_turnstileResolve) { _turnstileResolve(null); _turnstileResolve = null; }
+  }
+  function getTurnstileToken() {
+    return new Promise((resolve) => {
+      if (!window.turnstile) { resolve(null); return; }
+      _turnstileResolve = resolve;
+      try {
+        turnstile.reset('#turnstile-widget');
+        turnstile.execute('#turnstile-widget');
+      } catch (err) {
+        console.warn('Turnstile execute failed:', err);
+        resolve(null);
+      }
+    });
+  }
 
   // ══════════════════════════════════════════════════════
   // GUEST LIST — group-based
@@ -839,9 +867,11 @@
 
     try {
       if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
+        const cfToken = await getTurnstileToken();
         const payload = {
           action: 'submit',
           token: RSVP_TOKEN,
+          cf_token: cfToken,
           name: leadName,
           attending: attending.length > 0 ? 'true' : 'false',
           guestCount: attending.length,
@@ -1056,7 +1086,8 @@
 
     try {
       if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_WEB_APP_URL_HERE') {
-        const body = { action:'submit', token:RSVP_TOKEN, name:payload.name, attending:payload.attending?'true':'false', guestCount:payload.guestCount, guestNames, dietary, message:msg, timestamp:payload.timestamp };
+        const cfToken = await getTurnstileToken();
+        const body = { action:'submit', token:RSVP_TOKEN, cf_token:cfToken, name:payload.name, attending:payload.attending?'true':'false', guestCount:payload.guestCount, guestNames, dietary, message:msg, timestamp:payload.timestamp };
         await fetch(APPS_SCRIPT_URL, { method:'POST', mode:'no-cors', redirect:'follow', body: JSON.stringify(body) });
       }
     } catch(err) { console.warn('Apps Script error:',err); }
